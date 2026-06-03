@@ -6,4 +6,16 @@
 //   CanonicalizationError a value cannot be canonicalized (e.g. non-finite number)
 //   StoreError           wraps adapter-level failures
 
-export {};
+export class HaloError extends Error {
+  constructor(message: string) {
+    super(message);
+    // new.target keeps the name correct under subclassing and minification.
+    this.name = new.target.name;
+  }
+}
+
+export class UnknownHandle extends HaloError {}
+export class HashMismatch extends HaloError {}
+export class WrongKind extends HaloError {}
+export class CanonicalizationError extends HaloError {}
+export class StoreError extends HaloError {}

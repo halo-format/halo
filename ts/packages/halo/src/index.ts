@@ -8,4 +8,14 @@
 //
 // Re-exports only; implementation lives in the sibling modules.
 
-export {};
+export type { JsonValue, Handle, Alg } from "./types.js";
+export {
+  HaloError,
+  UnknownHandle,
+  HashMismatch,
+  WrongKind,
+  CanonicalizationError,
+  StoreError,
+} from "./errors.js";
+export { canonical, canonicalBytes } from "./canonical.js";
+export { hashBytes, handleOf } from "./hash.js";

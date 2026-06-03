@@ -1,0 +1,98 @@
+{
+  "description": "handle (structure)",
+  "alg": "sha256",
+  "cases": [
+    {
+      "name": "true",
+      "input": true,
+      "handle": "h:b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+    },
+    {
+      "name": "false",
+      "input": false,
+      "handle": "h:fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "name": "null",
+      "input": null,
+      "handle": "h:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    {
+      "name": "empty-object",
+      "input": {},
+      "handle": "h:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    {
+      "name": "empty-array",
+      "input": [],
+      "handle": "h:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "array-ints",
+      "input": [
+        1,
+        2,
+        3
+      ],
+      "handle": "h:a615eeaee21de5179de080de8c3052c8da901138406ba71c38c032845f7d54f4"
+    },
+    {
+      "name": "array-nested-empty-array",
+      "input": [
+        []
+      ],
+      "handle": "h:cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05"
+    },
+    {
+      "name": "array-nested-empty-object",
+      "input": [
+        {}
+      ],
+      "handle": "h:e10808d43975dc400731053386849f864f297e6c4f7519c380f3dbaf7067a840"
+    },
+    {
+      "name": "deep-nest",
+      "input": {
+        "x": [
+          1,
+          {
+            "y": 2
+          }
+        ],
+        "": null,
+        "nested": {
+          "deep": {
+            "deeper": [
+              true,
+              false,
+              null
+            ]
+          }
+        }
+      },
+      "handle": "h:63f8fc70e4033ab0da359f699d66daf75b44701289c5e36eb670c80c688c1266"
+    },
+    {
+      "name": "mixed-array",
+      "input": {
+        "mixed": [
+          1,
+          "two",
+          3.5,
+          true,
+          null,
+          {},
+          []
+        ]
+      },
+      "handle": "h:904bac08e8415e8e4e4cd849830def2d8053dc52ad60294124ce4528bb71d4b9"
+    },
+    {
+      "name": "empty-key",
+      "input": {
+        "": "empty-key-value"
+      },
+      "handle": "h:657da08c67dffc1051ad88ecf25dc252bd32827cd90a9384b0499ef3890ff7d7"
+    }
+  ]
+}

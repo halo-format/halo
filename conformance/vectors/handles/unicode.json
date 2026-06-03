@@ -1,0 +1,44 @@
+{
+  "description": "handle (unicode)",
+  "alg": "sha256",
+  "cases": [
+    {
+      "name": "astral-emoji",
+      "input": "\ud83d\ude00",
+      "handle": "h:7a0c50b92434b015545fe93ab723db2d4b2cdd14a441405624a9ce8be29f1d5a"
+    },
+    {
+      "name": "astral-clef",
+      "input": "\ud834\udd1e",
+      "handle": "h:c307e216b1eb0dc2c2a67cc0f49fcc0ab719ab24812bc5eb3be72767a8c72c75"
+    },
+    {
+      "name": "bmp-cjk",
+      "input": "\u4e2d\u6587",
+      "handle": "h:ae5501d6922ab917c22d22b489ec065bd1ac48244a124277f858fba6f722efd5"
+    },
+    {
+      "name": "key-order-mixed",
+      "input": {
+        "z": 1,
+        "a": 2,
+        "caf\u00e9": 3,
+        "\ud83d\ude00": 4,
+        "A": 5,
+        " ": 6,
+        "b10": 7,
+        "b2": 8
+      },
+      "handle": "h:ebe37e3e9245a568d764e51c710c767e27e8471a7d9969d077663b36cbd6ee52"
+    },
+    {
+      "name": "key-order-astral-vs-bmp",
+      "input": {
+        "\ud83d\ude00": 1,
+        "\uffff": 2,
+        "z": 3
+      },
+      "handle": "h:9901eca9ecff61ca2a3233c9f2c6668f067be684531911e6861f98f4c1ac265a"
+    }
+  ]
+}

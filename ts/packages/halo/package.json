@@ -9,12 +9,20 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/halo-format/halo" }
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/halo-format/halo"
+  },
+  "dependencies": {
+    "canonicalize": "^3.0.0"
+  }
 }
