@@ -31,11 +31,12 @@ cases where the payload is bigger than what you actually need.
    scratch, not in your context.
 2. Read the summary and the handle names. Decide which branches you actually
    need for the task.
-3. Collect every ref you need and fetch them together in one `fetch([...])`
-   call. Do not fetch one at a time: each call is a separate round trip, so
-   batching the refs for a step into a single call is much faster. Each value is
-   verified automatically; a `HashMismatch` on any entry means that data was
-   altered and must not be trusted.
+3. Collect every ref you need and fetch them together in one `fetchMany([...])`
+   call (use `fetch(ref)` only for a single leaf). Do not fetch one at a time:
+   each call is a separate round trip, so batching the refs for a step into a
+   single call is much faster. Each value is verified automatically; a
+   `HashMismatch` on any entry means that data was altered and must not be
+   trusted.
 4. You can address a branch by its readable ref (for example `m1.income`)
    instead of copying the long handle.
 5. Reason over only the values you fetched. Do not fetch branches you do not
