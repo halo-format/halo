@@ -17,6 +17,9 @@ from .errors import (
     UnknownHandle,
     WrongKind,
 )
+from .carve import auto_carve, make_auto_carve
+from .encode import encode, extend, merge
+from .envelope import build_envelope
 from .hash import handle_of, hash_bytes
 from .node import (
     branch_node,
@@ -28,6 +31,7 @@ from .node import (
     serialize,
 )
 from .store import FileStore, MemoryStore
+from .summarize import derive_summary
 
 __all__ = [
     "canonical",
@@ -41,6 +45,13 @@ __all__ = [
     "serialize",
     "node_handle",
     "decode",
+    "auto_carve",
+    "make_auto_carve",
+    "derive_summary",
+    "build_envelope",
+    "encode",
+    "extend",
+    "merge",
     "MemoryStore",
     "FileStore",
     "HaloError",
