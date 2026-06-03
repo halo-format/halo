@@ -1,0 +1,16 @@
+{
+  "name": "@halo-format/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Halo TypeScript workspace (reference implementation)",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

@@ -1,0 +1,38 @@
+# Node / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+.npm/
+pnpm-debug.log*
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+*.whl
+.venv/
+venv/
+.uv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Coverage / test output
+coverage/
+.coverage
+htmlcov/
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+
+# Local env
+.env
+.env.local
+
+# Internal design docs — never commit
+private/

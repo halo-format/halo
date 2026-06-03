@@ -1,0 +1,10 @@
+# Halo Python workspace root (second target).
+# Each package under packages/ is published as its own distribution on PyPI under the
+# halo-format namespace, for the same lightest-install reason as the TS scope.
+
+[tool.uv.workspace]
+members = ["packages/*", "conformance"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

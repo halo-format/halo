@@ -1,0 +1,9 @@
+[project]
+name = "halo-format-conformance"
+version = "0.0.0"
+description = "Python harness that loads ../../conformance/vectors and asserts the core conforms."
+requires-python = ">=3.10"
+dependencies = ["halo-format"]
+
+[tool.uv.sources]
+halo-format = { workspace = true }
