@@ -1,0 +1,120 @@
+{
+  "description": "canonical form (numbers)",
+  "cases": [
+    {
+      "name": "int-zero",
+      "input": 0,
+      "canonical": "0"
+    },
+    {
+      "name": "neg-zero",
+      "input": -0.0,
+      "canonical": "0"
+    },
+    {
+      "name": "int-one",
+      "input": 1,
+      "canonical": "1"
+    },
+    {
+      "name": "int-neg-one",
+      "input": -1,
+      "canonical": "-1"
+    },
+    {
+      "name": "float-1_5",
+      "input": 1.5,
+      "canonical": "1.5"
+    },
+    {
+      "name": "float-neg-1_5",
+      "input": -1.5,
+      "canonical": "-1.5"
+    },
+    {
+      "name": "float-0_1",
+      "input": 0.1,
+      "canonical": "0.1"
+    },
+    {
+      "name": "float-0_5",
+      "input": 0.5,
+      "canonical": "0.5"
+    },
+    {
+      "name": "pi-double",
+      "input": 3.141592653589793,
+      "canonical": "3.141592653589793"
+    },
+    {
+      "name": "exp-1e21",
+      "input": 1e+21,
+      "canonical": "1e+21"
+    },
+    {
+      "name": "exp-1e20",
+      "input": 1e+20,
+      "canonical": "100000000000000000000"
+    },
+    {
+      "name": "exp-1e-7",
+      "input": 1e-07,
+      "canonical": "1e-7"
+    },
+    {
+      "name": "exp-1e-6",
+      "input": 1e-06,
+      "canonical": "0.000001"
+    },
+    {
+      "name": "int-100",
+      "input": 100,
+      "canonical": "100"
+    },
+    {
+      "name": "float-100",
+      "input": 100.0,
+      "canonical": "100"
+    },
+    {
+      "name": "safe-int-max",
+      "input": 9007199254740991,
+      "canonical": "9007199254740991"
+    },
+    {
+      "name": "safe-int-min",
+      "input": -9007199254740991,
+      "canonical": "-9007199254740991"
+    },
+    {
+      "name": "double-rounding",
+      "input": 123456789.98765433,
+      "canonical": "123456789.98765433"
+    },
+    {
+      "name": "subnormal-min",
+      "input": 5e-324,
+      "canonical": "5e-324"
+    },
+    {
+      "name": "double-near-max",
+      "input": 1.7976931348623157e+308,
+      "canonical": "1.7976931348623157e+308"
+    },
+    {
+      "name": "machine-epsilon",
+      "input": 2.220446049250313e-16,
+      "canonical": "2.220446049250313e-16"
+    },
+    {
+      "name": "avogadro",
+      "input": 6.022e+23,
+      "canonical": "6.022e+23"
+    },
+    {
+      "name": "neg-small",
+      "input": -1e-06,
+      "canonical": "-0.000001"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "description": "handle (strings)",
+  "alg": "sha256",
+  "cases": [
+    {
+      "name": "empty",
+      "input": "",
+      "handle": "h:12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+    },
+    {
+      "name": "ascii",
+      "input": "hello",
+      "handle": "h:5aa762ae383fbb727af3c7a36d4940a5b8c40a989452d2304fc958ff3f354e7a"
+    },
+    {
+      "name": "embedded-quote",
+      "input": "a\"b",
+      "handle": "h:8bbcb681750af483258c5ca72e83c5c397bf66aa01e7c7787c0d212fc1f6fa1d"
+    },
+    {
+      "name": "whitespace-escapes",
+      "input": "tab\tnl\n cr\r",
+      "handle": "h:17409f7ceee28b95b44551388516cc7c44869610829ee8ee58d47c533785afe1"
+    },
+    {
+      "name": "short-escapes",
+      "input": "bsp \b ff \f end",
+      "handle": "h:4dec5401e13095a810c6410539dd94b3eb7b646640073df881952ee2b86f4b90"
+    },
+    {
+      "name": "control-chars",
+      "input": "ctrl \u0000 \u0001 \u001f end",
+      "handle": "h:afe4dd21db82efa8432f604aae6b12ed68127bdafd92328edeb01f0541974803"
+    },
+    {
+      "name": "del-not-escaped",
+      "input": "del \u007f end",
+      "handle": "h:7c5f70d6eac953856d7062dd8a1db8212a98e18a75c22a940119e58388674e15"
+    },
+    {
+      "name": "backslash",
+      "input": "backslash \\ end",
+      "handle": "h:c9a0967d53fc34dec0bdb60105eaead8093230f56abdd8cd746e814c28b61aff"
+    },
+    {
+      "name": "forward-slash",
+      "input": "slash / fwd",
+      "handle": "h:ec53c5315ad486980cf6c3268c0fe2821626edf23ddda13e854bb0cbcac42380"
+    },
+    {
+      "name": "latin1",
+      "input": "caf\u00e9",
+      "handle": "h:28380feb8724d669bc8d4cf5b5a5bb1adbdc61b81ebd06f3fabc567b4f3b0fc5"
+    }
+  ]
+}

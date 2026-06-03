@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@halo-format/halo": ["../packages/halo/src/index.ts"]
+    }
+  },
+  "include": ["conformance.test.ts", "vitest.config.ts"]
+}

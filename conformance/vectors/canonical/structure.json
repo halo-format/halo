@@ -1,0 +1,97 @@
+{
+  "description": "canonical form (structure)",
+  "cases": [
+    {
+      "name": "true",
+      "input": true,
+      "canonical": "true"
+    },
+    {
+      "name": "false",
+      "input": false,
+      "canonical": "false"
+    },
+    {
+      "name": "null",
+      "input": null,
+      "canonical": "null"
+    },
+    {
+      "name": "empty-object",
+      "input": {},
+      "canonical": "{}"
+    },
+    {
+      "name": "empty-array",
+      "input": [],
+      "canonical": "[]"
+    },
+    {
+      "name": "array-ints",
+      "input": [
+        1,
+        2,
+        3
+      ],
+      "canonical": "[1,2,3]"
+    },
+    {
+      "name": "array-nested-empty-array",
+      "input": [
+        []
+      ],
+      "canonical": "[[]]"
+    },
+    {
+      "name": "array-nested-empty-object",
+      "input": [
+        {}
+      ],
+      "canonical": "[{}]"
+    },
+    {
+      "name": "deep-nest",
+      "input": {
+        "x": [
+          1,
+          {
+            "y": 2
+          }
+        ],
+        "": null,
+        "nested": {
+          "deep": {
+            "deeper": [
+              true,
+              false,
+              null
+            ]
+          }
+        }
+      },
+      "canonical": "{\"\":null,\"nested\":{\"deep\":{\"deeper\":[true,false,null]}},\"x\":[1,{\"y\":2}]}"
+    },
+    {
+      "name": "mixed-array",
+      "input": {
+        "mixed": [
+          1,
+          "two",
+          3.5,
+          true,
+          null,
+          {},
+          []
+        ]
+      },
+      "canonical": "{\"mixed\":[1,\"two\",3.5,true,null,{},[]]}"
+    },
+    {
+      "name": "empty-key",
+      "input": {
+        "": "empty-key-value"
+      },
+      "canonical": "{\"\":\"empty-key-value\"}"
+    }
+  ]
+}

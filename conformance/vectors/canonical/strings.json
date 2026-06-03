@@ -1,0 +1,55 @@
+{
+  "description": "canonical form (strings)",
+  "cases": [
+    {
+      "name": "empty",
+      "input": "",
+      "canonical": "\"\""
+    },
+    {
+      "name": "ascii",
+      "input": "hello",
+      "canonical": "\"hello\""
+    },
+    {
+      "name": "embedded-quote",
+      "input": "a\"b",
+      "canonical": "\"a\\\"b\""
+    },
+    {
+      "name": "whitespace-escapes",
+      "input": "tab\tnl\n cr\r",
+      "canonical": "\"tab\\tnl\\n cr\\r\""
+    },
+    {
+      "name": "short-escapes",
+      "input": "bsp \b ff \f end",
+      "canonical": "\"bsp \\b ff \\f end\""
+    },
+    {
+      "name": "control-chars",
+      "input": "ctrl \u0000 \u0001 \u001f end",
+      "canonical": "\"ctrl \\u0000 \\u0001 \\u001f end\""
+    },
+    {
+      "name": "del-not-escaped",
+      "input": "del \u007f end",
+      "canonical": "\"del \u007f end\""
+    },
+    {
+      "name": "backslash",
+      "input": "backslash \\ end",
+      "canonical": "\"backslash \\\\ end\""
+    },
+    {
+      "name": "forward-slash",
+      "input": "slash / fwd",
+      "canonical": "\"slash / fwd\""
+    },
+    {
+      "name": "latin1",
+      "input": "caf\u00e9",
+      "canonical": "\"caf\u00e9\""
+    }
+  ]
+}

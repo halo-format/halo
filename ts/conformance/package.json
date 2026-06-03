@@ -5,7 +5,8 @@
   "description": "TypeScript harness that loads ../../conformance/vectors and asserts the core conforms.",
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@halo-format/halo": "workspace:*"

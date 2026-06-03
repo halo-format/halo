@@ -1,0 +1,43 @@
+{
+  "description": "canonical form (unicode)",
+  "cases": [
+    {
+      "name": "astral-emoji",
+      "input": "\ud83d\ude00",
+      "canonical": "\"\ud83d\ude00\""
+    },
+    {
+      "name": "astral-clef",
+      "input": "\ud834\udd1e",
+      "canonical": "\"\ud834\udd1e\""
+    },
+    {
+      "name": "bmp-cjk",
+      "input": "\u4e2d\u6587",
+      "canonical": "\"\u4e2d\u6587\""
+    },
+    {
+      "name": "key-order-mixed",
+      "input": {
+        "z": 1,
+        "a": 2,
+        "caf\u00e9": 3,
+        "\ud83d\ude00": 4,
+        "A": 5,
+        " ": 6,
+        "b10": 7,
+        "b2": 8
+      },
+      "canonical": "{\" \":6,\"A\":5,\"a\":2,\"b10\":7,\"b2\":8,\"caf\u00e9\":3,\"z\":1,\"\ud83d\ude00\":4}"
+    },
+    {
+      "name": "key-order-astral-vs-bmp",
+      "input": {
+        "\ud83d\ude00": 1,
+        "\uffff": 2,
+        "z": 3
+      },
+      "canonical": "{\"z\":3,\"\ud83d\ude00\":1,\"\uffff\":2}"
+    }
+  ]
+}
