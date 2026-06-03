@@ -98,6 +98,53 @@ CATEGORIES = {
 }
 
 
+def build_node_cases():
+    """Node-level vectors: a node object -> its canonical bytes -> its handle.
+
+    A node is hashed exactly like any other JSON value, so handle_of(node) gives the node handle.
+    Branch nodes reference real child handles (computed from child leaf nodes), so these vectors
+    also pin the Merkle wiring: a branch's bytes contain its children's handles.
+    """
+    cases = []
+
+    # Leaf nodes wrapping a range of value kinds.
+    for name, value in [
+        ("leaf-int", 42),
+        ("leaf-float", 3.5),
+        ("leaf-string", "hello"),
+        ("leaf-bool", True),
+        ("leaf-null", None),
+        ("leaf-object", {"a": 1, "b": [2, 3]}),
+        ("leaf-array", [1, "two", None]),
+        ("leaf-empty-object", {}),
+    ]:
+        cases.append(("node-" + name, {"k": "l", "value": value}))
+
+    # Branch node over real child leaf handles (the credit-report shape from the design doc).
+    income_leaf = {"k": "l", "value": {"monthly": 4200}}
+    debts_leaf = {"k": "l", "value": {"monthly": 2604}}
+    _, income_h = handle_of(income_leaf)
+    _, debts_h = handle_of(debts_leaf)
+    cases.append(("node-branch-two", {
+        "k": "b",
+        "summary": "2 branches: debts, income",
+        "branches": {"income": income_h, "debts": debts_h},
+    }))
+
+    # Branch with no children — an empty map root is still a valid branch node.
+    cases.append(("node-branch-empty", {"k": "b", "summary": "0 branches", "branches": {}}))
+
+    # Nested branch: a branch whose child is itself a branch handle.
+    _, inner_h = handle_of({"k": "b", "summary": "0 branches", "branches": {}})
+    cases.append(("node-branch-nested", {
+        "k": "b",
+        "summary": "1 branch: child",
+        "branches": {"child": inner_h},
+    }))
+
+    return cases
+
+
 def main():
     canonical_dir = os.path.join(VECTORS_DIR, "canonical")
     handles_dir = os.path.join(VECTORS_DIR, "handles")
@@ -121,6 +168,19 @@ def main():
                       f, ensure_ascii=True, indent=2)
             f.write("\n")
         print(f"{category}: {len(cases)} cases -> canonical/{category}.json, handles/{category}.json")
+
+    # nodes/ vectors: node object -> canonical bytes -> handle.
+    nodes_dir = os.path.join(VECTORS_DIR, "nodes")
+    os.makedirs(nodes_dir, exist_ok=True)
+    node_cases = []
+    for name, node in build_node_cases():
+        canon, handle = handle_of(node)
+        node_cases.append({"name": name, "node": node, "canonical": canon, "handle": handle})
+    with open(os.path.join(nodes_dir, "nodes.json"), "w", encoding="utf-8") as f:
+        json.dump({"description": "node -> canonical bytes -> handle", "alg": "sha256",
+                   "cases": node_cases}, f, ensure_ascii=True, indent=2)
+        f.write("\n")
+    print(f"nodes: {len(node_cases)} cases -> nodes/nodes.json")
 
 
 if __name__ == "__main__":

@@ -18,12 +18,31 @@ from .errors import (
     WrongKind,
 )
 from .hash import handle_of, hash_bytes
+from .node import (
+    branch_node,
+    decode,
+    is_branch,
+    is_leaf,
+    leaf_node,
+    node_handle,
+    serialize,
+)
+from .store import FileStore, MemoryStore
 
 __all__ = [
     "canonical",
     "canonical_bytes",
     "hash_bytes",
     "handle_of",
+    "branch_node",
+    "leaf_node",
+    "is_branch",
+    "is_leaf",
+    "serialize",
+    "node_handle",
+    "decode",
+    "MemoryStore",
+    "FileStore",
     "HaloError",
     "UnknownHandle",
     "HashMismatch",
