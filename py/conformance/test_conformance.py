@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from halo_format import canonical, handle_of
+from halo_format import canonical, decode, handle_of, node_handle, serialize
 
 VECTORS = os.path.join(os.path.dirname(__file__), "..", "..", "conformance", "vectors")
 
@@ -36,3 +36,12 @@ def test_canonical(case):
 @pytest.mark.parametrize("case", _load("handles"))
 def test_handle(case):
     assert handle_of(case["input"]) == case["handle"]
+
+
+@pytest.mark.parametrize("case", _load("nodes"))
+def test_node(case):
+    node = case["node"]
+    assert serialize(node).decode("utf-8") == case["canonical"]
+    assert node_handle(node) == case["handle"]
+    # round-trip: decode(serialize(node)) reconstructs the node
+    assert decode(serialize(node)) == node

@@ -19,3 +19,15 @@ export {
 } from "./errors.js";
 export { canonical, canonicalBytes } from "./canonical.js";
 export { hashBytes, handleOf } from "./hash.js";
+export type { BranchNode, LeafNode, Node } from "./node.js";
+export {
+  isBranch,
+  isLeaf,
+  branchNode,
+  leafNode,
+  serialize,
+  nodeHandle,
+  decode,
+} from "./node.js";
+export type { Store } from "./store.js";
+export { MemoryStore, FileStore } from "./store.js";

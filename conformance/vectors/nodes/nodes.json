@@ -1,0 +1,123 @@
+{
+  "description": "node -> canonical bytes -> handle",
+  "alg": "sha256",
+  "cases": [
+    {
+      "name": "node-leaf-int",
+      "node": {
+        "k": "l",
+        "value": 42
+      },
+      "canonical": "{\"k\":\"l\",\"value\":42}",
+      "handle": "h:4dac73cd262b67b179d93aa51956f65bfcb6c240e44ff23efc7b4a9a7bf3ed18"
+    },
+    {
+      "name": "node-leaf-float",
+      "node": {
+        "k": "l",
+        "value": 3.5
+      },
+      "canonical": "{\"k\":\"l\",\"value\":3.5}",
+      "handle": "h:17392aa362603ba8648c0fb53fce546ef9504b62f166bb443d19a353d44ac30c"
+    },
+    {
+      "name": "node-leaf-string",
+      "node": {
+        "k": "l",
+        "value": "hello"
+      },
+      "canonical": "{\"k\":\"l\",\"value\":\"hello\"}",
+      "handle": "h:4cd7afc2f66b818e810897c16701f36a75c98ee084c49dbea93c0a5f85741b40"
+    },
+    {
+      "name": "node-leaf-bool",
+      "node": {
+        "k": "l",
+        "value": true
+      },
+      "canonical": "{\"k\":\"l\",\"value\":true}",
+      "handle": "h:d71f2c071401d59a07aa8124261639aa9f15dc7ebc5359cf075de15815b3c7d0"
+    },
+    {
+      "name": "node-leaf-null",
+      "node": {
+        "k": "l",
+        "value": null
+      },
+      "canonical": "{\"k\":\"l\",\"value\":null}",
+      "handle": "h:fe355d3a5d64c87745de2138eba86cabea86288954ce430f0c027afbdb9a9f37"
+    },
+    {
+      "name": "node-leaf-object",
+      "node": {
+        "k": "l",
+        "value": {
+          "a": 1,
+          "b": [
+            2,
+            3
+          ]
+        }
+      },
+      "canonical": "{\"k\":\"l\",\"value\":{\"a\":1,\"b\":[2,3]}}",
+      "handle": "h:b311a1e989671149dfa4172fb52ea5a9b25222938043a38deea3f1e2b8d16b75"
+    },
+    {
+      "name": "node-leaf-array",
+      "node": {
+        "k": "l",
+        "value": [
+          1,
+          "two",
+          null
+        ]
+      },
+      "canonical": "{\"k\":\"l\",\"value\":[1,\"two\",null]}",
+      "handle": "h:4b275333c65910e9ee1854a2bbab9bfab3c914603125eb685b8cc603164875f5"
+    },
+    {
+      "name": "node-leaf-empty-object",
+      "node": {
+        "k": "l",
+        "value": {}
+      },
+      "canonical": "{\"k\":\"l\",\"value\":{}}",
+      "handle": "h:ff53e2e3f4a2232efcfeee6a62208ca575bf210a37b3add4083459ec49ff743c"
+    },
+    {
+      "name": "node-branch-two",
+      "node": {
+        "k": "b",
+        "summary": "2 branches: debts, income",
+        "branches": {
+          "income": "h:56d7156c5e7b8688285afbd55fc3fefd1db667ece304769843ef65ed5abcd54a",
+          "debts": "h:8e00f514f9191835fe36d7bf10a7cb4ff5edb13dca2c886e59a389c9be5367c0"
+        }
+      },
+      "canonical": "{\"branches\":{\"debts\":\"h:8e00f514f9191835fe36d7bf10a7cb4ff5edb13dca2c886e59a389c9be5367c0\",\"income\":\"h:56d7156c5e7b8688285afbd55fc3fefd1db667ece304769843ef65ed5abcd54a\"},\"k\":\"b\",\"summary\":\"2 branches: debts, income\"}",
+      "handle": "h:d2b6e8117e6e2acecec6d3e9d55682cea3be84453ad0cc6e780054d017e1122c"
+    },
+    {
+      "name": "node-branch-empty",
+      "node": {
+        "k": "b",
+        "summary": "0 branches",
+        "branches": {}
+      },
+      "canonical": "{\"branches\":{},\"k\":\"b\",\"summary\":\"0 branches\"}",
+      "handle": "h:3582ec1adabbf3e0659b1cbabf1fb0a8c3e6c77770e87268a0674e549b94c337"
+    },
+    {
+      "name": "node-branch-nested",
+      "node": {
+        "k": "b",
+        "summary": "1 branch: child",
+        "branches": {
+          "child": "h:3582ec1adabbf3e0659b1cbabf1fb0a8c3e6c77770e87268a0674e549b94c337"
+        }
+      },
+      "canonical": "{\"branches\":{\"child\":\"h:3582ec1adabbf3e0659b1cbabf1fb0a8c3e6c77770e87268a0674e549b94c337\"},\"k\":\"b\",\"summary\":\"1 branch: child\"}",
+      "handle": "h:46060bc0b766f5f40066caad4043c2907d96a08ae4fbf925a40a97c715370708"
+    }
+  ]
+}
