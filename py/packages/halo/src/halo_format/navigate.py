@@ -15,9 +15,10 @@ need no registration.
 Sync to match the Python Store (see store.py's note on the async divergence from TypeScript).
 """
 
+from .envelope import verify_envelope
 from .errors import HaloError, HashMismatch, UnknownHandle, WrongKind
 from .hash import hash_bytes
-from .node import branch_node, decode, is_branch, is_leaf, node_handle
+from .node import decode, is_branch, is_leaf
 
 
 def _is_raw_handle(ref):
@@ -156,10 +157,9 @@ class Navigator:
 def open_(envelope, store):
     """Open an envelope into a Navigator, verifying the root. Zero fetches for an honest branch root."""
     alg = envelope["alg"]
-    # The inlined view lets us verify a branch root with no store read: re-hash the reconstructed
-    # root node and compare to the claimed root handle.
-    reconstructed = branch_node(envelope["view"]["summary"], envelope["view"]["branches"])
-    if node_handle(reconstructed, alg) != envelope["root"]:
+    # The inlined view lets us verify a branch root with no store read (verify_envelope re-hashes
+    # the reconstructed root node and compares to the claimed root handle).
+    if not verify_envelope(envelope):
         # Either a leaf root (value not inlined) or a tampered branch view. Read the real root to
         # tell them apart: a branch here means the view was tampered.
         node = _read_verified(envelope["root"], store, alg)

@@ -9,6 +9,7 @@ import {
   walk,
   fetch,
   fetchMany,
+  verifyEnvelope,
   MemoryStore,
   type Store,
   type Handle,
@@ -72,6 +73,24 @@ describe("open", () => {
       view: { ...envelope.view, summary: "lies" },
     };
     await expect(open(tampered, store)).rejects.toBeInstanceOf(HashMismatch);
+  });
+});
+
+describe("verifyEnvelope (store-free self-check)", () => {
+  it("is true for an honest branch root and stable across different source blocks", async () => {
+    const { envelope } = await encoded();
+    expect(verifyEnvelope(envelope)).toBe(true);
+    const a: HaloEnvelope = { ...envelope, source: { id: "m1" } };
+    const b: HaloEnvelope = { ...envelope, source: { id: "m2", tool: "t" } };
+    expect(verifyEnvelope(a)).toBe(true);
+    expect(verifyEnvelope(b)).toBe(true);
+  });
+
+  it("is false for a tampered view and for a leaf root (value not inlined)", async () => {
+    const { envelope } = await encoded();
+    expect(verifyEnvelope({ ...envelope, view: { ...envelope.view, summary: "lies" } })).toBe(false);
+    const leaf = await encoded(42);
+    expect(verifyEnvelope(leaf.envelope)).toBe(false);
   });
 });
 

@@ -36,7 +36,7 @@ export { autoCarve, makeAutoCarve } from "./carve.js";
 export type { Summarizer } from "./summarize.js";
 export { deriveSummary } from "./summarize.js";
 export type { HaloEnvelope } from "./envelope.js";
-export { buildEnvelope } from "./envelope.js";
+export { buildEnvelope, verifyEnvelope } from "./envelope.js";
 export type { EncodeOptions, EncodeResult } from "./encode.js";
 export { encode, extend, merge } from "./encode.js";
 export type { WalkResult, FetchResult } from "./navigate.js";

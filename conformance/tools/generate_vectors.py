@@ -98,6 +98,110 @@ CATEGORIES = {
 }
 
 
+# --- whole-tree envelope vectors -------------------------------------------------------------
+#
+# These pin the encode pipeline (carve + summarize + envelope), not just JCS. The carve/summarize
+# rules are Halo's own spec, so they are reimplemented HERE against the rfc8785 oracle rather than
+# imported from halo_format — that keeps the byte-level handles independent of the port under test
+# (every handle below is rfc8785-derived) while still asserting the structural rules both ports
+# implement. Must stay in lockstep with carve.py/summarize.py/envelope.py (defaults: array
+# threshold 25, inline byte threshold 1024).
+
+ARRAY_THRESHOLD = 25
+INLINE_BYTES = 1024
+
+
+def _derive_summary(branches):
+    # Names sorted by UTF-16 code unit (via UTF-16-BE), matching the ports.
+    names = sorted(branches.keys(), key=lambda s: s.encode("utf-16-be"))
+    n = len(names)
+    if n == 0:
+        return "0 branches"
+    if n == 1:
+        return f"1 branch: {names[0]}"
+    return f"{n} branches: {', '.join(names)}"
+
+
+def _leaf_summary(value):
+    if value is None:
+        return "leaf: null"
+    if isinstance(value, bool):  # before int/float: bool is an int subclass
+        return "leaf: boolean"
+    if isinstance(value, (int, float)):
+        return "leaf: number"
+    if isinstance(value, str):
+        return "leaf: string"
+    if isinstance(value, list):
+        return f"leaf: array of {len(value)} items"
+    return f"leaf: object with {len(value)} keys"
+
+
+def _auto_carve(value):
+    """Returns (kind, children) where kind is 'leaf' or 'branch'. Mirrors autoCarve defaults."""
+    if isinstance(value, dict):
+        if not value:
+            return ("leaf", None)
+        if len(rfc8785.dumps(value)) <= INLINE_BYTES:
+            return ("leaf", None)
+        return ("branch", dict(value))
+    if isinstance(value, list):
+        if len(value) <= ARRAY_THRESHOLD:
+            return ("leaf", None)
+        children = {}
+        chunks = (len(value) + ARRAY_THRESHOLD - 1) // ARRAY_THRESHOLD
+        for i in range(chunks):
+            children[str(i)] = value[i * ARRAY_THRESHOLD : (i + 1) * ARRAY_THRESHOLD]
+        return ("branch", children)
+    return ("leaf", None)  # primitives (None, bool, number, str)
+
+
+def _build(value):
+    """Bottom-up: returns (handle, node) for the subtree rooted at value."""
+    kind, children = _auto_carve(value)
+    if kind == "leaf":
+        node = {"k": "l", "value": value}
+    else:
+        branches = {name: _build(child)[0] for name, child in children.items()}
+        node = {"k": "b", "summary": _derive_summary(branches), "branches": branches}
+    handle = "h:" + hashlib.sha256(rfc8785.dumps(node)).hexdigest()
+    return handle, node
+
+
+def _envelope(value):
+    root_h, root_node = _build(value)
+    if root_node["k"] == "b":
+        view = {"summary": root_node["summary"], "branches": root_node["branches"]}
+    else:
+        view = {"summary": _leaf_summary(value), "branches": {}}
+    return {"halo": "1", "alg": "sha256", "root": root_h, "view": view}
+
+
+# Whole-tree cases, default autoCarve. Inputs chosen to exercise: leaf roots (primitive, short
+# array, small object), a carved branch root, a nested branch, array chunking, and the chunk
+# boundary on both sides (25 inlines, 26 splits).
+ENVELOPE_CASES = [
+    ("leaf-root-int", 42),
+    ("leaf-root-array", [1, 2, 3]),
+    ("leaf-root-small-object", {"a": 1}),
+    ("branch-root", {"a": "x" * 2000, "b": 1, "c": [1, 2, 3]}),
+    ("nested-branch", {"outer": {"inner": "y" * 2000, "k": 1}, "z": "w" * 2000}),
+    ("array-leaf-25", list(range(25))),
+    ("array-chunk-boundary-26", list(range(26))),
+    ("array-chunked-60", list(range(60))),
+]
+
+# source is envelope-only metadata and MUST NOT enter any hash. Each case pairs two distinct source
+# blocks; the harness builds both envelopes and asserts the root (and view) are unchanged.
+SOURCE_CASES = [
+    (
+        "source-not-hashed",
+        {"a": "x" * 2000, "b": 1},
+        {"id": "m1"},
+        {"id": "m2", "tool": "get_customer", "args": [123], "ts": "2026-01-01T00:00:00Z"},
+    ),
+]
+
+
 def build_node_cases():
     """Node-level vectors: a node object -> its canonical bytes -> its handle.
 
@@ -181,6 +285,27 @@ def main():
                    "cases": node_cases}, f, ensure_ascii=True, indent=2)
         f.write("\n")
     print(f"nodes: {len(node_cases)} cases -> nodes/nodes.json")
+
+    # envelopes/ vectors: whole-tree input -> expected envelope (default autoCarve).
+    envelopes_dir = os.path.join(VECTORS_DIR, "envelopes")
+    os.makedirs(envelopes_dir, exist_ok=True)
+    env_cases = [{"name": name, "input": value, "envelope": _envelope(value)}
+                 for name, value in ENVELOPE_CASES]
+    with open(os.path.join(envelopes_dir, "envelopes.json"), "w", encoding="utf-8") as f:
+        json.dump({"description": "whole-tree: input -> expected envelope (default autoCarve)",
+                   "alg": "sha256", "cases": env_cases}, f, ensure_ascii=True, indent=2)
+        f.write("\n")
+    print(f"envelopes: {len(env_cases)} cases -> envelopes/envelopes.json")
+
+    # source.json: confirm source is never hashed (two sources -> same root).
+    source_cases = [{"name": name, "input": value, "source_a": a, "source_b": b,
+                     "root": _envelope(value)["root"]}
+                    for name, value, a, b in SOURCE_CASES]
+    with open(os.path.join(envelopes_dir, "source.json"), "w", encoding="utf-8") as f:
+        json.dump({"description": "source is envelope-only and never hashed", "alg": "sha256",
+                   "cases": source_cases}, f, ensure_ascii=True, indent=2)
+        f.write("\n")
+    print(f"source: {len(source_cases)} cases -> envelopes/source.json")
 
 
 if __name__ == "__main__":

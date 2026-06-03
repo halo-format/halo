@@ -15,7 +15,8 @@
 import type { Alg, Handle, JsonValue } from "./types.js";
 import type { Store } from "./store.js";
 import type { HaloEnvelope } from "./envelope.js";
-import { decode, isBranch, isLeaf, branchNode, nodeHandle, type Node } from "./node.js";
+import { verifyEnvelope } from "./envelope.js";
+import { decode, isBranch, isLeaf, type Node } from "./node.js";
 import { hashBytes } from "./hash.js";
 import { HaloError, UnknownHandle, HashMismatch, WrongKind } from "./errors.js";
 
@@ -190,10 +191,9 @@ export class Navigator {
 /** Open an envelope into a Navigator, verifying the root. Zero fetches for an honest branch root. */
 export async function open(envelope: HaloEnvelope, store: Store): Promise<Navigator> {
   const alg = envelope.alg;
-  // The inlined view lets us verify a branch root with no store read: re-hash the reconstructed
-  // root node and compare to the claimed root handle.
-  const reconstructed = branchNode(envelope.view.summary, envelope.view.branches);
-  if (nodeHandle(reconstructed, alg) !== envelope.root) {
+  // The inlined view lets us verify a branch root with no store read (verifyEnvelope re-hashes the
+  // reconstructed root node and compares to the claimed root handle).
+  if (!verifyEnvelope(envelope)) {
     // Either a leaf root (its value is not inlined in the view) or a tampered branch view. Read the
     // real root to tell them apart: a branch here means the view was tampered.
     const node = await readVerified(envelope.root, store, alg);

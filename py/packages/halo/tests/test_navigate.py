@@ -13,6 +13,7 @@ from halo_format import (
     fetch,
     fetch_many,
     open_,
+    verify_envelope,
     walk,
 )
 
@@ -67,6 +68,23 @@ def test_open_rejects_tampered_view():
     tampered = {**env, "view": {**env["view"], "summary": "lies"}}
     with pytest.raises(HashMismatch):
         open_(tampered, store)
+
+
+def test_verify_envelope_true_and_source_stable():
+    _, _, env = _encoded()
+    assert verify_envelope(env) is True
+    a = {**env, "source": {"id": "m1"}}
+    b = {**env, "source": {"id": "m2", "tool": "t"}}
+    assert verify_envelope(a) is True
+    assert verify_envelope(b) is True
+
+
+def test_verify_envelope_false_for_tampered_view_and_leaf_root():
+    _, _, env = _encoded()
+    tampered = {**env, "view": {**env["view"], "summary": "lies"}}
+    assert verify_envelope(tampered) is False
+    _, _, leaf_env = _encoded(42)
+    assert verify_envelope(leaf_env) is False
 
 
 def test_free_walk_and_fetch_by_handle():
