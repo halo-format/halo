@@ -19,8 +19,9 @@ from .errors import (
 )
 from .carve import auto_carve, make_auto_carve
 from .encode import encode, extend, merge
-from .envelope import build_envelope
+from .envelope import build_envelope, verify_envelope
 from .hash import handle_of, hash_bytes
+from .navigate import Navigator, fetch, fetch_many, open_, walk
 from .node import (
     branch_node,
     decode,
@@ -49,9 +50,15 @@ __all__ = [
     "make_auto_carve",
     "derive_summary",
     "build_envelope",
+    "verify_envelope",
     "encode",
     "extend",
     "merge",
+    "open_",
+    "walk",
+    "fetch",
+    "fetch_many",
+    "Navigator",
     "MemoryStore",
     "FileStore",
     "HaloError",

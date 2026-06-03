@@ -8,7 +8,7 @@ re-hashing the reconstructed root against root. source is envelope-only identifi
 with the navigator/adapter; this module is the builder the encode pipeline returns.)
 """
 
-from .node import is_branch
+from .node import branch_node, is_branch, node_handle
 
 
 def _leaf_summary(value):
@@ -33,3 +33,15 @@ def build_envelope(root, root_node, alg="sha256"):
     else:
         view = {"summary": _leaf_summary(root_node["value"]), "branches": {}}
     return {"halo": "1", "alg": alg, "root": root, "view": view}
+
+
+def verify_envelope(envelope):
+    """Self-verify an envelope from its inlined view alone (no store): re-hash the reconstructed
+    root branch node and compare to the claimed root. source is excluded by construction — it is
+    never part of a node — so two envelopes differing only in source verify identically.
+
+    Only a BRANCH root can be self-verified this way; a leaf root's value is not inlined in the view,
+    so this returns False for leaf roots and the caller must verify against the store (open_/fetch).
+    """
+    reconstructed = branch_node(envelope["view"]["summary"], envelope["view"]["branches"])
+    return node_handle(reconstructed, envelope["alg"]) == envelope["root"]

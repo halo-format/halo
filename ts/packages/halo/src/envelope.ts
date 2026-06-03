@@ -9,7 +9,7 @@
 // is the builder the encode pipeline returns.)
 
 import type { Alg, Handle, JsonValue } from "./types.js";
-import { isBranch, type Node } from "./node.js";
+import { isBranch, branchNode, nodeHandle, type Node } from "./node.js";
 
 export type HaloEnvelope = {
   halo: "1";
@@ -41,4 +41,17 @@ export function buildEnvelope(root: Handle, rootNode: Node, alg: Alg = "sha256")
     ? { summary: rootNode.summary, branches: { ...rootNode.branches } }
     : { summary: leafSummary(rootNode.value), branches: {} as Record<string, Handle> };
   return { halo: "1", alg, root, view };
+}
+
+/**
+ * Self-verify an envelope from its inlined view alone (no store): re-hash the reconstructed root
+ * branch node and compare to the claimed root. `source` is excluded by construction — it is never
+ * part of a node — so two envelopes differing only in `source` verify identically.
+ *
+ * Only a BRANCH root can be self-verified this way; a leaf root's value is not inlined in the view,
+ * so this returns false for leaf roots and the caller must verify against the store (open / fetch).
+ */
+export function verifyEnvelope(envelope: HaloEnvelope): boolean {
+  const reconstructed = branchNode(envelope.view.summary, envelope.view.branches);
+  return nodeHandle(reconstructed, envelope.alg) === envelope.root;
 }
