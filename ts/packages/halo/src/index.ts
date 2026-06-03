@@ -31,3 +31,11 @@ export {
 } from "./node.js";
 export type { Store } from "./store.js";
 export { MemoryStore, FileStore } from "./store.js";
+export type { CarvePolicy, CarveDecision, AutoCarveOptions } from "./carve.js";
+export { autoCarve, makeAutoCarve } from "./carve.js";
+export type { Summarizer } from "./summarize.js";
+export { deriveSummary } from "./summarize.js";
+export type { HaloEnvelope } from "./envelope.js";
+export { buildEnvelope } from "./envelope.js";
+export type { EncodeOptions, EncodeResult } from "./encode.js";
+export { encode, extend, merge } from "./encode.js";
