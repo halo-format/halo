@@ -67,6 +67,7 @@ jobs:
           publish: pnpm run release
           title: "release: version packages"
           commit: "release: version packages"
+          createGithubReleases: true # tag each published package + create a GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # used by `changeset publish` -> `npm publish`
