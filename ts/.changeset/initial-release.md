@@ -1,6 +1,0 @@
----
-"@halo-format/halo": minor
-"@halo-format/claude": minor
----
-
-Initial public release of Halo — content-addressed, navigable tool results for AI agents. Ships the framework-agnostic core (encode / navigate / verify, both TypeScript and Python against the shared conformance suite) and the Claude Agent SDK host adapter. The two Python packages (`halo-format`, `halo-format-claude`) release on the same version.
