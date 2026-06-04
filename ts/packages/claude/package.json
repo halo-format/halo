@@ -1,7 +1,7 @@
 {
   "name": "@halo-format/claude",
   "version": "0.0.0",
-  "description": "Halo host adapter for the Claude Agent SDK: a PostToolUse encode hook plus in-process halo_walk / halo_fetch MCP tools. installHalo() wires it in one call.",
+  "description": "Halo host adapter for the Claude Agent SDK: a PostToolUse encode hook (results become a shape map, out of context) plus a single in-process halo_fetch MCP tool. installHalo() wires it in one call.",
   "type": "module",
   "exports": {
     ".": {

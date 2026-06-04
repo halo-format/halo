@@ -12,7 +12,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a && . ./.env && set +a
 
-PY="${HALO_PY:-/Users/aj/halo/py/.venv/bin/python}"
+# Python with halo-format + halo-format-claude installed. Defaults to this example's own
+# .venv (created in Quick start), then the monorepo venv, then plain python3. Override with HALO_PY.
+PY="${HALO_PY:-$([ -x .venv/bin/python ] && echo .venv/bin/python \
+  || ([ -x ../../py/.venv/bin/python ] && echo ../../py/.venv/bin/python || echo python3))}"
 LABEL="${1:-baseline}"
 RID="${2:-11111111-1111-1111-1111-111111111111}"
 

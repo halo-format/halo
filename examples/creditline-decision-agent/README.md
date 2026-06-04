@@ -148,12 +148,13 @@ per-tool call counts) and writes `runs/<label>.json`.
 Set **`HALO=1`** to route every tool result through the Halo host adapter
 ([`halo_format_claude.install_halo`](../../py/packages/claude)). It adds a
 `PostToolUse` encode hook that replaces a large tool result with a small
-content-addressed **envelope** (the map) — keeping the bulk out of the model's
-context — plus in-process `halo_walk` / `halo_fetch` tools the agent uses to pull
-back only the fields it needs, verified on read.
+**shape map** (root kind + per-field kind and bounded preview) — keeping the bulk
+out of the model's context — plus a single in-process `halo_fetch` tool the agent
+uses to pull back only the fields it needs, verified on read (a `[branch]` ref
+expands in place, so there is no separate `halo_walk`).
 
 ```bash
-# install the Halo packages from the monorepo
+# install the Halo packages from the monorepo (editable)
 pip install -e ../../py/packages/halo ../../py/packages/claude
 
 # A/B: same request, fresh decision state, only Halo differs
@@ -164,13 +165,18 @@ BUREAU_TRADELINES=220 scripts/run_token_ab.sh baseline-big
 BUREAU_TRADELINES=220 scripts/run_token_ab.sh halo-big
 ```
 
-See [`runs/COMPARISON.md`](runs/COMPARISON.md) for a worked comparison. Headline:
-on the bureau result Halo cuts what enters context by **75.8%** (9.5 KB → 2.3 KB,
-fetching only the five policy scalars and never the tradeline/inquiry bulk) and
-trims cost; in a prompt-cached loop on a single modest payload raw token *count*
-can still rise from the added navigation turns, and above ~tens of KB the Claude
-CLI's own file-spill handling preempts the hook. Halo's clean win is large
-payloads where the model needs few fields.
+Each run writes a token summary to `runs/<label>.json` (input / output / cache /
+total + cost + turns + per-tool counts), so you can diff the arms directly. The
+`runs/` directory is local-only (git-ignored) — a live agent is non-deterministic,
+so run each arm a few times and compare means rather than a single run.
+
+**What to expect.** On the bureau result Halo cuts what enters context by **~76%**
+(≈9.5 KB → ≈2.3 KB), fetching only the five policy scalars and never the
+tradeline/inquiry bulk — the decision is unchanged. In a prompt-cached loop on a
+single modest payload the end-to-end token *count* can still rise from the added
+navigation turns, and above ~tens of KB the Claude CLI's own file-spill handling
+preempts the hook. Halo's clean win is large payloads where the model needs few
+fields.
 
 ## Layout
 

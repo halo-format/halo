@@ -1,7 +1,0 @@
-arm	run	total	cost	turns	search_logs	halo_fetch
-baseline	1	339539	0.2655	20	3	0
-halo	1	253173	0.1697	19	2	1
-baseline	2	340151	0.2108	20	3	0
-halo	2	374633	0.2149	22	4	2
-baseline	3	377564	0.2452	20	3	0
-halo	3	372741	0.2126	22	4	1
