@@ -1,0 +1,27 @@
+{
+  "label": "toon",
+  "halo_adapter": false,
+  "format": "toon",
+  "model": "claude-sonnet-4-6",
+  "tokens": {
+    "input": 30,
+    "output": 4901,
+    "cache_read": 380373,
+    "cache_creation": 13721,
+    "total": 399025
+  },
+  "total_cost_usd": 0.23973265,
+  "num_turns": 22,
+  "tool_calls": {
+    "Skill": 3,
+    "ToolSearch": 3,
+    "mcp__monitoring__list_open_issues": 1,
+    "mcp__monitoring__triage_note": 3,
+    "mcp__monitoring__get_issue_detail": 1,
+    "mcp__monitoring__search_logs": 4,
+    "Bash": 1,
+    "mcp__monitoring__list_incidents": 1,
+    "mcp__monitoring__declare_incident": 1
+  },
+  "halo_maps_encoded": null
+}

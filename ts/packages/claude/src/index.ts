@@ -79,13 +79,14 @@ export { HaloSession } from "./session.js";
 export type { SessionOptions, IngestResult } from "./session.js";
 export { createEncodeHook } from "./encode-hook.js";
 export type { EncodeHook, EncodeHookOptions } from "./encode-hook.js";
-export { createNavServer, haloWalk, haloFetch } from "./nav-tools.js";
+export { createNavServer, haloFetch } from "./nav-tools.js";
+export type { FetchEntry } from "./session.js";
 export { argJoin } from "./accumulate.js";
 export type { KeyOf } from "./accumulate.js";
-export { sizeOf, parseToolOutput, serializeEnvelope } from "./serialize.js";
+export { sizeOf, parseToolOutput, serializeEnvelope, shapeOf, previewOf } from "./serialize.js";
+export type { FieldHint } from "./serialize.js";
 export {
   HALO_MCP_SERVER,
-  HALO_WALK_TOOL,
   HALO_FETCH_TOOL,
   HALO_TOOL_PREFIX,
   isHaloNavTool,

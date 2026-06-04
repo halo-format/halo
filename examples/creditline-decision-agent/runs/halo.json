@@ -1,0 +1,35 @@
+{
+  "label": "halo",
+  "halo_enabled": true,
+  "halo_threshold": 2048,
+  "model": "claude-opus-4-8",
+  "tokens": {
+    "input": 1427,
+    "output": 4040,
+    "cache_read": 273315,
+    "cache_creation": 11498,
+    "total": 290280
+  },
+  "total_cost_usd": 0.31723899999999994,
+  "num_turns": 13,
+  "tool_calls": {
+    "ToolSearch": 2,
+    "mcp__mimic-creditline__creditline_get_request": 1,
+    "mcp__mimic-creditline__creditline_get_customer": 1,
+    "mcp__mimic-creditline__creditline_pull_bureau": 1,
+    "mcp__halo__halo_fetch": 1,
+    "mcp__mimic-creditline__creditline_get_active_policy": 1,
+    "mcp__mimic-creditline__creditline_get_agent_provenance": 1,
+    "mcp__mimic-creditline__creditline_record_decision": 2,
+    "mcp__mimic-creditline__creditline_request_approval": 1,
+    "mcp__mimic-creditline__creditline_notify_customer": 1
+  },
+  "halo": {
+    "maps_encoded": 1,
+    "map_ids": [
+      "22222222-2222-2222-2222-222222222222"
+    ],
+    "store_nodes": 18
+  },
+  "is_error": false
+}

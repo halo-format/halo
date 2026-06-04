@@ -27,12 +27,16 @@ def test_replaces_large_result_with_the_envelope():
     so = out["hookSpecificOutput"]
     assert so["hookEventName"] == "PostToolUse"
     assert isinstance(so["updatedToolOutput"], str)
-    assert "[halo]" in so["updatedToolOutput"]
 
-    envelope = json.loads(so["updatedToolOutput"].split("\n", 1)[1])
-    assert envelope["halo"] == "1"
-    assert envelope["source"]["id"] == "m1"
-    assert envelope["source"]["tool"] == "query_db"
+    # The model sees a shape map: the id, the producing tool, and a [branch] field with sub-refs —
+    # not the raw envelope JSON (no hashes).
+    text = so["updatedToolOutput"]
+    assert "[halo]" in text
+    assert '"m1"' in text
+    assert "query_db" in text
+    assert "m1.rows" in text
+    assert "[branch]" in text
+    assert '"halo":"1"' not in text
 
 
 def test_small_result_passes_through_untouched():

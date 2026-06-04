@@ -12,17 +12,17 @@ def customer(monthly):
     }
 
 
-def test_ingest_encodes_navigable_map_and_round_trips_a_leaf():
+def test_first_result_is_flat_fields_top_level_no_walk():
     s = HaloSession(now=lambda: "T")
     res = s.ingest("get_customer", {}, customer(4200))
     assert res["id"] == "m1"  # no scalar arg -> synthetic id
 
-    branch = s.walk("m1.get_customer")
-    assert sorted(branch["branches"]) == ["debts", "income", "name", "notes"]
+    # Flat: the value's own fields are the top-level branches, visible in the envelope (no walk).
+    assert sorted(res["envelope"]["view"]["branches"]) == ["debts", "income", "name", "notes"]
 
-    got = s.fetch(["m1.get_customer.income", "m1.get_customer.debts"])
-    assert got["m1.get_customer.income"] == {"ok": True, "value": {"monthly": 4200, "currency": "USD"}}
-    assert got["m1.get_customer.debts"] == {"ok": True, "value": {"monthly": 2604, "currency": "USD"}}
+    got = s.fetch(["m1.income", "m1.debts"])
+    assert got["m1.income"] == {"ok": True, "value": {"monthly": 4200, "currency": "USD"}}
+    assert got["m1.debts"] == {"ok": True, "value": {"monthly": 2604, "currency": "USD"}}
 
 
 def test_source_stamped_without_affecting_content_hash():
@@ -51,6 +51,7 @@ def test_entity_accumulation_folds_shared_arg_calls_into_one_map():
     assert first["id"] == "7"
     assert second["id"] == "7"  # same entity -> same map
 
+    # Two tools accumulate -> namespaced under their (short) names.
     assert sorted(second["envelope"]["view"]["branches"]) == ["get_appointments", "get_customer"]
     customer_branch = s.walk("7.get_customer")
     assert sorted(customer_branch["branches"]) == ["debts", "income", "name", "notes"]
@@ -70,9 +71,39 @@ def test_resolves_refs_across_several_maps_in_one_batch():
     s = HaloSession()
     s.ingest("get_customer", {"id": 1}, customer(100))
     s.ingest("get_customer", {"id": 2}, customer(200))
-    got = s.fetch(["1.get_customer.income", "2.get_customer.income"])
-    assert got["1.get_customer.income"] == {"ok": True, "value": {"monthly": 100, "currency": "USD"}}
-    assert got["2.get_customer.income"] == {"ok": True, "value": {"monthly": 200, "currency": "USD"}}
+    got = s.fetch(["1.income", "2.income"])  # each map is a single flat result
+    assert got["1.income"] == {"ok": True, "value": {"monthly": 100, "currency": "USD"}}
+    assert got["2.income"] == {"ok": True, "value": {"monthly": 200, "currency": "USD"}}
+
+
+def test_fetch_on_a_branch_ref_returns_sub_shape_not_wrongkind():
+    # Single batch API, no walk tool: fetching a branch expands to its child refs rather than failing.
+    s = HaloSession()
+    s.ingest("get_customer", {"id": 7}, customer(5000))
+    s.ingest("get_appointments", {"customerId": 7}, [{"when": "2026-07-01"}])
+
+    got = s.fetch(["7.get_customer"])
+    entry = got["7.get_customer"]
+    assert entry["ok"] is True
+    assert entry["kind"] == "branch"
+    assert sorted(f["ref"] for f in entry["fields"]) == [
+        "7.get_customer.debts",
+        "7.get_customer.income",
+        "7.get_customer.name",
+        "7.get_customer.notes",
+    ]
+
+
+def test_describe_classifies_each_top_level_field_with_a_preview():
+    s = HaloSession(now=lambda: "T")
+    res = s.ingest("get_customer", {"id": 7}, customer(4200))
+    hints = s.describe(res["envelope"])
+    income = next(h for h in hints if h["ref"] == "7.income")
+    assert income["kind"] == "leaf"
+    assert "4200" in income["preview"]
+    notes = next(h for h in hints if h["ref"] == "7.notes")
+    assert notes["kind"] == "leaf"
+    assert notes["shape"].startswith("string[")
 
 
 def test_before_any_map_fetch_unknown_walk_raises():

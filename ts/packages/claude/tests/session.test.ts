@@ -15,15 +15,15 @@ function customer(monthly: number) {
 describe("HaloSession.ingest + navigate", () => {
   it("encodes a result into a navigable map and round-trips a leaf", async () => {
     const s = new HaloSession({ now: () => "T" });
-    const { id } = await s.ingest("get_customer", {}, customer(4200));
+    const { id, envelope } = await s.ingest("get_customer", {}, customer(4200));
     expect(id).toBe("m1"); // no scalar arg -> synthetic id
 
-    const branch = await s.walk(`${id}.get_customer`);
-    expect(Object.keys(branch.branches).sort()).toEqual(["debts", "income", "name", "notes"]);
+    // Flat: the value's own fields are the top-level branches, visible in the envelope (no walk).
+    expect(Object.keys(envelope.view.branches).sort()).toEqual(["debts", "income", "name", "notes"]);
 
-    const got = await s.fetch([`${id}.get_customer.income`, `${id}.get_customer.debts`]);
-    expect(got[`${id}.get_customer.income`]).toEqual({ ok: true, value: { monthly: 4200, currency: "USD" } });
-    expect(got[`${id}.get_customer.debts`]).toEqual({ ok: true, value: { monthly: 2604, currency: "USD" } });
+    const got = await s.fetch([`${id}.income`, `${id}.debts`]);
+    expect(got[`${id}.income`]).toEqual({ ok: true, value: { monthly: 4200, currency: "USD" } });
+    expect(got[`${id}.debts`]).toEqual({ ok: true, value: { monthly: 2604, currency: "USD" } });
   });
 
   it("stamps source (id/tool/args/ts) without affecting the content hash", async () => {
@@ -73,9 +73,42 @@ describe("HaloSession entity accumulation (one entity, one map)", () => {
     const s = new HaloSession();
     await s.ingest("get_customer", { id: 1 }, customer(100));
     await s.ingest("get_customer", { id: 2 }, customer(200));
-    const got = await s.fetch(["1.get_customer.income", "2.get_customer.income"]);
-    expect(got["1.get_customer.income"]).toEqual({ ok: true, value: { monthly: 100, currency: "USD" } });
-    expect(got["2.get_customer.income"]).toEqual({ ok: true, value: { monthly: 200, currency: "USD" } });
+    const got = await s.fetch(["1.income", "2.income"]); // each map is a single flat result
+    expect(got["1.income"]).toEqual({ ok: true, value: { monthly: 100, currency: "USD" } });
+    expect(got["2.income"]).toEqual({ ok: true, value: { monthly: 200, currency: "USD" } });
+  });
+});
+
+describe("HaloSession.fetch on a branch ref (single batch API, no walk tool)", () => {
+  it("returns the branch's sub-shape instead of a WrongKind error", async () => {
+    const s = new HaloSession();
+    await s.ingest("get_customer", { id: 7 }, customer(5000));
+    await s.ingest("get_appointments", { customerId: 7 }, [{ when: "2026-07-01" }]);
+
+    // `7.get_customer` is a branch; fetching it expands to its child refs rather than failing.
+    const got = await s.fetch(["7.get_customer"]);
+    const entry = got["7.get_customer"]!;
+    expect(entry.ok).toBe(true);
+    if (!entry.ok || !("kind" in entry)) throw new Error("expected a branch entry");
+    expect(entry.kind).toBe("branch");
+    expect(entry.fields.map((f) => f.ref).sort()).toEqual([
+      "7.get_customer.debts",
+      "7.get_customer.income",
+      "7.get_customer.name",
+      "7.get_customer.notes",
+    ]);
+  });
+
+  it("describe() classifies each top-level field with a preview", async () => {
+    const s = new HaloSession({ now: () => "T" });
+    const { envelope } = await s.ingest("get_customer", { id: 7 }, customer(4200));
+    const hints = await s.describe(envelope);
+    const income = hints.find((h) => h.ref === "7.income")!;
+    expect(income.kind).toBe("leaf");
+    expect(income.preview).toContain("4200");
+    const notes = hints.find((h) => h.ref === "7.notes")!;
+    expect(notes.kind).toBe("leaf");
+    expect(notes.shape.startsWith("string[")).toBe(true);
   });
 });
 
