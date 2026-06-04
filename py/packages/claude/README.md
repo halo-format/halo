@@ -3,10 +3,12 @@
 Halo host adapter for the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python)
 (Python). `install_halo()` wires it in one call:
 
-- a **PostToolUse encode hook** that replaces a large tool result with its halo envelope (the map),
-  so the payload stays out of the model's context;
-- in-process **`halo_walk` / `halo_fetch`** MCP tools the model uses to pull back only the leaves it
-  needs, verified on read.
+- a **PostToolUse encode hook** that replaces a large tool result with a halo **shape map** (root
+  kind + one line per field: ref, kind, and a bounded preview), so the payload stays out of the
+  model's context while it still sees what's there;
+- a single in-process **`halo_fetch`** MCP tool the model uses to pull back only the leaves it needs,
+  verified on read — a ref that lands on a branch returns that branch's sub-refs, so one batch API
+  both pulls and expands (there is no separate `halo_walk`).
 
 ```python
 from claude_agent_sdk import ClaudeAgentOptions, query

@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { encode, MemoryStore } from "@halo-format/halo";
-import { sizeOf, parseToolOutput, serializeEnvelope } from "../src/serialize.js";
+import {
+  sizeOf,
+  parseToolOutput,
+  serializeEnvelope,
+  shapeOf,
+  previewOf,
+  type FieldHint,
+} from "../src/serialize.js";
 
 describe("sizeOf", () => {
   it("measures strings and objects in bytes, and is 0 for nullish", () => {
@@ -52,18 +59,62 @@ describe("parseToolOutput", () => {
   });
 });
 
+describe("shapeOf / previewOf", () => {
+  it("tags a value's structural kind with a size for strings/arrays/objects", () => {
+    expect(shapeOf(1843)).toBe("number");
+    expect(shapeOf(null)).toBe("null");
+    expect(shapeOf("checkout-api")).toBe("string[12]");
+    expect(shapeOf([1, 2, 3])).toBe("array[3]");
+    expect(shapeOf({ a: 1, b: 2 })).toBe("object{2}");
+  });
+
+  it("samples a value to a bounded single line", () => {
+    expect(previewOf({ id: "BACKEND-12A" })).toBe('{"id":"BACKEND-12A"}');
+    const long = previewOf("x".repeat(500));
+    expect(long.length).toBeLessThanOrEqual(80);
+    expect(long.endsWith("…")).toBe(true);
+  });
+});
+
 describe("serializeEnvelope", () => {
-  it("prefixes a one-line note naming the map and refs, then the envelope JSON", async () => {
+  it("states the map id and root kind, lists field refs, and emits NO hashes/JSON", async () => {
     const { envelope } = await encode(
       { income: { monthly: 4200 }, debts: { monthly: 2604 }, filler: "x".repeat(2000) },
       { store: new MemoryStore() },
     );
     envelope.source = { id: "m1" };
     const out = serializeEnvelope(envelope);
-    const [note, json] = out.split("\n");
-    expect(note).toContain("[halo]");
-    expect(note).toContain('"m1"');
-    expect(note).toContain("m1.income");
-    expect(JSON.parse(json!)).toEqual(envelope);
+    expect(out).toContain("[halo]");
+    expect(out).toContain('"m1"');
+    expect(out).toContain("object, 3 fields");
+    expect(out).toContain("m1.income");
+    // The hashed envelope and its 64-char handles are not shown to the model.
+    expect(out).not.toContain(envelope.root);
+    expect(out).not.toContain('"halo":"1"');
+  });
+
+  it("renders per-field hints (kind + preview) when supplied", async () => {
+    const { envelope } = await encode(
+      { income: { monthly: 4200 }, filler: "x".repeat(2000) },
+      { store: new MemoryStore() },
+    );
+    envelope.source = { id: "m1", tool: "mcp__bank__get_profile" };
+    const hints: FieldHint[] = [
+      { ref: "m1.income", kind: "leaf", shape: "object{1}", preview: '{"monthly":4200}' },
+      { ref: "m1.rows", kind: "branch", shape: "[branch] array{4}", preview: "↳ 0, 1, 2, 3" },
+    ];
+    const out = serializeEnvelope(envelope, hints);
+    expect(out).toContain("from get_profile"); // short tool name
+    expect(out).toContain('m1.income  object{1}  {"monthly":4200}');
+    expect(out).toContain("m1.rows  [branch] array{4}  ↳ 0, 1, 2, 3");
+  });
+
+  it("tells the model to fetch the map itself when the root is a leaf", async () => {
+    const { envelope } = await encode("just a long string ".repeat(200), {
+      store: new MemoryStore(),
+    });
+    envelope.source = { id: "m9" };
+    const out = serializeEnvelope(envelope);
+    expect(out).toContain('Fetch "m9" itself');
   });
 });

@@ -4,21 +4,21 @@
   "format": "json",
   "model": "claude-sonnet-4-6",
   "tokens": {
-    "input": 25,
-    "output": 3798,
-    "cache_read": 245483,
-    "cache_creation": 9468,
-    "total": 258774
+    "input": 30,
+    "output": 4681,
+    "cache_read": 354752,
+    "cache_creation": 18101,
+    "total": 377564
   },
-  "total_cost_usd": 0.1667669,
-  "num_turns": 18,
+  "total_cost_usd": 0.24515635000000002,
+  "num_turns": 20,
   "tool_calls": {
     "Skill": 3,
     "ToolSearch": 3,
     "mcp__monitoring__list_open_issues": 1,
     "mcp__monitoring__triage_note": 3,
     "mcp__monitoring__get_issue_detail": 1,
-    "mcp__monitoring__search_logs": 1,
+    "mcp__monitoring__search_logs": 3,
     "mcp__monitoring__list_incidents": 1,
     "mcp__monitoring__declare_incident": 1
   },

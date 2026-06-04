@@ -29,7 +29,8 @@ const TSX_BIN = join(PROJECT_ROOT, "node_modules", ".bin", "tsx");
 
 // HALO here means OUR consumer-side adapter (@halo-format/claude), NOT the server's built-in Halo.
 // In both arms the MCP server runs RAW (MONITORING_HALO=0), so the heavy results are full payloads;
-// when ADAPTER_ON, installHalo's PostToolUse hook encodes them locally and exposes halo_walk/fetch.
+// when ADAPTER_ON, installHalo's PostToolUse hook encodes them locally and exposes ONE tool,
+// halo_fetch (it both pulls leaves and expands branches — there is no separate walk tool).
 const ADAPTER_ON = ["1", "true", "yes", "on"].includes((process.env.HALO ?? "").toLowerCase());
 const FORMAT = (process.env.MONITORING_FORMAT || "json").toLowerCase(); // json | toon
 const RUN_LABEL = process.env.RUN_LABEL || (ADAPTER_ON ? "halo" : FORMAT === "toon" ? "toon" : "baseline");
@@ -46,8 +47,8 @@ comma-separated row per item. Read it directly as the full data (no fetching nee
 // Strip it; the server is raw here. For the adapter arm, substitute guidance for OUR halo_ tools.
 const BASE_PROMPT = SYSTEM_PROMPT.replace(/TOOL DISCIPLINE — Halo:[\s\S]*?\n\nFLOW each run:/, "FLOW each run:");
 const HALO_GUIDANCE = `TOOL DISCIPLINE — Halo (navigation):
-- Large tool results come back as a halo ENVELOPE: { "halo":"1", "view":{ "summary", "branches":{ name: handle } }, "source":{ "id":"<mapId>" } } — the full data is held, verified, out of your context.
-- Read view.summary and the branch names, then fetch ONLY the fields a step needs in ONE \`mcp__halo__halo_fetch\` call, passing refs like ["<mapId>.<field>"]. Use \`mcp__halo__halo_walk\` on a ref first only if a branch is itself large. Do not pull whole lists/log windows. Each value is verified.
+- Large tool results are withheld and replaced by a halo SHAPE MAP: a line naming the map id and its root kind, then one line per field giving its ref ("<mapId>.<field>"), its kind (a value, or a [branch]), and a short preview. The full data is held, verified, out of your context.
+- Read the shape map, then fetch ONLY the fields a step needs in ONE \`mcp__halo__halo_fetch\` call, passing refs like ["<mapId>.<field>", ...]. This is the SINGLE navigation tool: a value ref returns its value; a [branch] ref returns its sub-refs to fetch next. The previews are usually enough to pick the right refs without any extra round trip. Do not pull whole lists/log windows. Each value is verified on read.
 
 `;
 
@@ -63,7 +64,7 @@ const MONITORING_TOOLS = [
   "resolve_incident",
   "assign_incident",
 ].map((t) => `mcp__monitoring__${t}`);
-const HALO_NAV_TOOLS = ["mcp__halo__halo_walk", "mcp__halo__halo_fetch"];
+const HALO_NAV_TOOLS = ["mcp__halo__halo_fetch"]; // one tool only — fetch pulls leaves AND expands branches
 
 async function run(userPrompt: string) {
   const sessionId = process.env.AGENT_SESSION_ID || randomUUID();
@@ -106,7 +107,7 @@ async function run(userPrompt: string) {
   };
 
   // The Halo arm: our consumer-side adapter wraps the options with a PostToolUse encode hook +
-  // in-process halo_walk/halo_fetch tools. Nothing in the MCP server changes.
+  // the in-process halo_fetch tool. Nothing in the MCP server changes.
   const installed = ADAPTER_ON ? installHalo(baseOptions as never, { threshold: 2048 }) : null;
   const options = (installed ? installed.options : baseOptions) as never;
   const session = (installed?.session ?? null) as { store?: unknown } & Record<string, unknown> | null;

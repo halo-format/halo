@@ -1,28 +1,28 @@
-"""The navigation tools — how the model pulls back what the hook withheld. An in-process MCP server
-exposing halo_walk and halo_fetch, both backed by the session store and verified on read.
+"""The navigation surface — how the model pulls back what the hook withheld. An in-process MCP server
+exposing exactly ONE tool, halo_fetch, backed by the session store and verified on read.
 
-halo_fetch takes a LIST of refs on purpose: each fetch is a separate model round trip, the dominant
-latency in the loop, so the model is nudged to gather every ref a step needs and pull them in one
-call. It returns a per-ref result, so one unknown or tampered entry (surfaced as a HashMismatch)
-never sinks the batch.
+One tool on purpose: an earlier version also exposed halo_walk (expand a branch) alongside halo_fetch
+(pull leaves), and the model wasted turns choosing between them and fetching a branch ref through the
+leaf tool. halo_fetch now does both — a leaf ref returns its value, a branch ref returns its sub-shape
+— so there is a single batch API and nothing to disambiguate.
 
-The pure helpers (halo_walk / halo_fetch) are split from the MCP wrapping so they can be tested
-without the SDK runtime; the tool() decorator is the only SDK-coupled surface."""
+halo_fetch takes a LIST of refs: each fetch is a separate model round trip, the dominant latency in
+the loop, so the model is nudged to gather every ref a step needs and pull them in one call. It
+returns a per-ref result, so one unknown or tampered entry (surfaced as a HashMismatch) never sinks
+the batch.
+
+The pure helper (halo_fetch) is split from the MCP wrapping so it can be tested without the SDK
+runtime; the tool() decorator is the only SDK-coupled surface."""
 
 import json
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
-from .constants import HALO_FETCH_TOOL, HALO_MCP_SERVER, HALO_WALK_TOOL
-
-
-def halo_walk(session, ref: str) -> dict:
-    """Walk a branch ref to its summary and child handles; never returns leaf data."""
-    return session.walk(ref)
+from .constants import HALO_FETCH_TOOL, HALO_MCP_SERVER
 
 
 def halo_fetch(session, refs) -> dict:
-    """Fetch several leaf refs at once, verified, with a per-ref ok/error result."""
+    """Fetch several refs at once, verified, with a per-ref result; branch refs return their sub-shape."""
     return session.fetch(refs)
 
 
@@ -30,41 +30,20 @@ def _ok(value) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(value)}]}
 
 
-def _fail(message: str) -> dict:
-    return {"content": [{"type": "text", "text": message}], "isError": True}
-
-
-def _error_name(exc: Exception) -> str:
-    name = type(exc).__name__
-    return str(exc) if name == "RuntimeError" else name
-
-
-_WALK_DESC = (
-    "Expand a halo branch to its summary and child refs, without pulling any leaf data. "
-    "Pass a ref like `m1.income` (or a raw `h:` handle). Use this to see a large branch's "
-    "sub-structure before fetching deeper."
-)
-
 _FETCH_DESC = (
-    "Fetch one or more halo leaves by ref, verified on read. Pass ALL the refs a step needs in one "
-    "call (refs is a list) rather than one at a time — each call is a separate round trip. Returns "
-    "a per-ref result; an entry with ok=false (e.g. HashMismatch) means that data must not be trusted."
+    "The one tool for reading a halo map. Pass ALL the refs a step needs in one call (refs is a list) "
+    "rather than one at a time — each call is a separate round trip. A ref like `m1.income` (or a raw "
+    "`h:` handle) that points at a value returns it as {ok:true,value}; a ref that points at a "
+    "[branch] returns {ok:true,kind:'branch',fields:[…]} listing its sub-refs to fetch next. An entry "
+    "with ok=false (e.g. HashMismatch) means that data must not be trusted."
 )
 
 
 def create_nav_server(session):
-    """Build the in-process MCP server exposing halo_walk and halo_fetch over the given session."""
-
-    @tool(HALO_WALK_TOOL, _WALK_DESC, {"ref": str})
-    async def _walk(args):
-        ref = args["ref"]
-        try:
-            return _ok(halo_walk(session, ref))
-        except Exception as exc:  # surface a navigation error as tool output, not a crash
-            return _fail(f'halo_walk failed for "{ref}": {_error_name(exc)}')
+    """Build the in-process MCP server exposing the single halo_fetch tool over the given session."""
 
     @tool(HALO_FETCH_TOOL, _FETCH_DESC, {"refs": list[str]})
     async def _fetch(args):
         return _ok(halo_fetch(session, args["refs"]))
 
-    return create_sdk_mcp_server(HALO_MCP_SERVER, tools=[_walk, _fetch])
+    return create_sdk_mcp_server(HALO_MCP_SERVER, tools=[_fetch])

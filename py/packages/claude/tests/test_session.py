@@ -76,6 +76,36 @@ def test_resolves_refs_across_several_maps_in_one_batch():
     assert got["2.income"] == {"ok": True, "value": {"monthly": 200, "currency": "USD"}}
 
 
+def test_fetch_on_a_branch_ref_returns_sub_shape_not_wrongkind():
+    # Single batch API, no walk tool: fetching a branch expands to its child refs rather than failing.
+    s = HaloSession()
+    s.ingest("get_customer", {"id": 7}, customer(5000))
+    s.ingest("get_appointments", {"customerId": 7}, [{"when": "2026-07-01"}])
+
+    got = s.fetch(["7.get_customer"])
+    entry = got["7.get_customer"]
+    assert entry["ok"] is True
+    assert entry["kind"] == "branch"
+    assert sorted(f["ref"] for f in entry["fields"]) == [
+        "7.get_customer.debts",
+        "7.get_customer.income",
+        "7.get_customer.name",
+        "7.get_customer.notes",
+    ]
+
+
+def test_describe_classifies_each_top_level_field_with_a_preview():
+    s = HaloSession(now=lambda: "T")
+    res = s.ingest("get_customer", {"id": 7}, customer(4200))
+    hints = s.describe(res["envelope"])
+    income = next(h for h in hints if h["ref"] == "7.income")
+    assert income["kind"] == "leaf"
+    assert "4200" in income["preview"]
+    notes = next(h for h in hints if h["ref"] == "7.notes")
+    assert notes["kind"] == "leaf"
+    assert notes["shape"].startswith("string[")
+
+
 def test_before_any_map_fetch_unknown_walk_raises():
     s = HaloSession()
     assert s.fetch(["m1.x"]) == {"m1.x": {"ok": False, "error": "UnknownHandle"}}

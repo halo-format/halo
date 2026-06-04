@@ -33,13 +33,16 @@ describe("encode hook", () => {
     expect(so).toBeDefined();
     expect(so!.hookEventName).toBe("PostToolUse");
     expect(typeof so!.updatedToolOutput).toBe("string");
-    expect(so!.updatedToolOutput).toContain("[halo]");
 
-    const json = so!.updatedToolOutput.split("\n")[1]!;
-    const envelope = JSON.parse(json);
-    expect(envelope.halo).toBe("1");
-    expect(envelope.source.id).toBe("m1");
-    expect(envelope.source.tool).toBe("query_db");
+    // The model sees a shape map: the id, the producing tool, and a [branch] field with sub-refs —
+    // not the raw envelope JSON (no hashes).
+    const text = so!.updatedToolOutput;
+    expect(text).toContain("[halo]");
+    expect(text).toContain('"m1"');
+    expect(text).toContain("query_db");
+    expect(text).toContain("m1.rows");
+    expect(text).toContain("[branch]");
+    expect(text).not.toContain('"halo":"1"');
   });
 
   it("passes a small result through untouched (no encode)", async () => {

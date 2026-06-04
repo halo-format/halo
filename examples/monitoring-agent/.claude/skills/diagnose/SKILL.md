@@ -7,25 +7,30 @@ description: >-
 allowed-tools:
   - mcp__monitoring__get_issue_detail
   - mcp__monitoring__search_logs
-  - mcp__monitoring__halo_fetch
-  - mcp__monitoring__halo_fetch_many
+  - mcp__halo__halo_fetch
 ---
 
 # Diagnose
 
-1. **Detail** — `get_issue_detail(issue_id)`. The envelope `summary` gives the
-   issue core + the latest exception type/value; `refs` carve out `stacktrace`,
-   `breadcrumbs`, `tags`, and `events`.
+When a heavy read is withheld you get a halo SHAPE MAP: the map id + root kind,
+then one line per field (its `<mapId>.<field>` ref, its kind, and a preview).
+`mcp__halo__halo_fetch` is the only navigation tool — pass an array of refs and
+batch everything a step needs into ONE call.
 
-2. **Drill in (batched)** — fetch only what you need, and batch it:
-   `halo_fetch_many([refs.stacktrace, refs.breadcrumbs])`. Find the top **in-app**
+1. **Detail** — `get_issue_detail(issue_id)`. The shape map (id = the issue id)
+   lists `issue`, `latest_event`, `n_events`, `stacktrace`, `breadcrumbs`,
+   `tags`, `events`. The previews often already show the exception and the
+   culprit frame.
+
+2. **Drill in (one call)** — fetch only what you need, together:
+   `halo_fetch(["<id>.stacktrace", "<id>.breadcrumbs"])`. Find the top **in-app**
    frame (`in_app: true`, has a `context_line`) — that is the culprit. Read the
    breadcrumb immediately before the error for what happened just prior.
 
 3. **Correlate with logs** — `search_logs` scoped to the relevant service/level
-   and window (e.g. `{ service, level: "error" }`). Reason on the summary
-   (`error_count`, `by_service`, `window`); `halo_fetch(refs.errors)` for the
-   error slice only. Do not pull the whole window.
+   and window (e.g. `{ service, level: "error" }`). Reason on the preview fields
+   (`error_count`, `by_service`, `window`); `halo_fetch(["<id>.errors"])` for the
+   error slice only. Do not pull the whole window (`lines`).
 
 4. **Hypothesis** — state the likely cause in one or two sentences, citing the
    frame, the breadcrumb, and the correlated log spike. This feeds the

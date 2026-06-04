@@ -2,7 +2,9 @@
 them). Kept in one place so the exclusion and the registration can never drift apart."""
 
 HALO_MCP_SERVER = "halo"
-HALO_WALK_TOOL = "halo_walk"
+# One navigation tool only. halo_fetch is the single batch API the model ever sees: it pulls leaves
+# AND, when a ref lands on a branch, returns that branch's sub-shape — so there is no second tool
+# (no halo_walk) to choose between or confuse a leaf ref with.
 HALO_FETCH_TOOL = "halo_fetch"
 
 # In-process MCP tools are exposed to the model (and to hooks) as ``mcp__<server>__<tool>``.

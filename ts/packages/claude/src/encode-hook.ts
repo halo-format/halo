@@ -35,10 +35,13 @@ export function createEncodeHook(session: HaloSession, opts: EncodeHookOptions =
     if (value === undefined) return PASSTHROUGH;
 
     const { envelope } = await session.ingest(input.tool_name, input.tool_input, value);
+    // Describe the fields (kind + bounded preview, read from the store) so the model sees a shape
+    // map it can fetch from directly, instead of opaque branch names it has to guess at.
+    const hints = await session.describe(envelope);
     return {
       hookSpecificOutput: {
         hookEventName: "PostToolUse",
-        updatedToolOutput: serializeEnvelope(envelope),
+        updatedToolOutput: serializeEnvelope(envelope, hints),
       },
     };
   };

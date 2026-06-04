@@ -6,16 +6,17 @@ description: >-
   the start of every monitoring run.
 allowed-tools:
   - mcp__monitoring__list_open_issues
-  - mcp__monitoring__halo_fetch
+  - mcp__halo__halo_fetch
   - mcp__monitoring__triage_note
 ---
 
 # Triage
 
 1. **Pull** — `list_open_issues` (optionally filter `severity: ["error","fatal"]`).
-   You get a Halo envelope: a `summary` with `total`, `by_level`, and a `top`
-   ranked table. Reason on the summary; do **not** fetch `refs.full_list` unless
-   the top table is insufficient.
+   If the result is large it comes back as a halo SHAPE MAP listing `total`,
+   `by_level`, `top` (the ranked table), and `full_list`. Reason on the `top`
+   preview; do **not** `halo_fetch(["<id>.full_list"])` unless the top table is
+   insufficient. `mcp__halo__halo_fetch` (one array of refs) is the only fetch tool.
 
 2. **Rank** the candidates by, in order: users affected (`user_count`), event
    count (`times_seen`), severity (`fatal` > `error` > `warning` > `info`), and

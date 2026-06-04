@@ -3,8 +3,8 @@
 install_halo(options, ...) augments the SDK options with:
   - a PostToolUse encode hook that, above a size threshold, encodes a tool result into a shared
     store and sets updatedToolOutput to the envelope (the map), not the blob;
-  - an in-process MCP server exposing halo_walk(ref) and halo_fetch(refs) backed by the same store,
-    for the model to pull back the withheld leaves, verified on read.
+  - an in-process MCP server exposing ONE tool, halo_fetch(refs), backed by the same store, for the
+    model to pull back the withheld leaves (and expand branches), verified on read.
 
 One call to adopt the adapter. Plumbing (the hook) is deterministic and fires always; the Skill
 (loaded separately by the host) is guidance that shapes how the model navigates. The two stay
@@ -28,12 +28,11 @@ from .constants import (
     HALO_FETCH_TOOL,
     HALO_MCP_SERVER,
     HALO_TOOL_PREFIX,
-    HALO_WALK_TOOL,
     is_halo_nav_tool,
 )
 from .encode_hook import create_encode_hook
-from .nav_tools import create_nav_server, halo_fetch, halo_walk
-from .serialize import parse_tool_output, serialize_envelope, size_of
+from .nav_tools import create_nav_server, halo_fetch
+from .serialize import parse_tool_output, preview_of, serialize_envelope, shape_of, size_of
 from .session import HaloSession
 
 # Matches every tool name EXCEPT the halo navigation tools, so the encode hook skips them. The
@@ -94,15 +93,15 @@ __all__ = [
     "HaloSession",
     "create_encode_hook",
     "create_nav_server",
-    "halo_walk",
     "halo_fetch",
     "arg_join",
     "KeyOf",
     "size_of",
     "parse_tool_output",
     "serialize_envelope",
+    "shape_of",
+    "preview_of",
     "HALO_MCP_SERVER",
-    "HALO_WALK_TOOL",
     "HALO_FETCH_TOOL",
     "HALO_TOOL_PREFIX",
     "is_halo_nav_tool",

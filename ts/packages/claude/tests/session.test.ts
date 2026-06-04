@@ -79,6 +79,39 @@ describe("HaloSession entity accumulation (one entity, one map)", () => {
   });
 });
 
+describe("HaloSession.fetch on a branch ref (single batch API, no walk tool)", () => {
+  it("returns the branch's sub-shape instead of a WrongKind error", async () => {
+    const s = new HaloSession();
+    await s.ingest("get_customer", { id: 7 }, customer(5000));
+    await s.ingest("get_appointments", { customerId: 7 }, [{ when: "2026-07-01" }]);
+
+    // `7.get_customer` is a branch; fetching it expands to its child refs rather than failing.
+    const got = await s.fetch(["7.get_customer"]);
+    const entry = got["7.get_customer"]!;
+    expect(entry.ok).toBe(true);
+    if (!entry.ok || !("kind" in entry)) throw new Error("expected a branch entry");
+    expect(entry.kind).toBe("branch");
+    expect(entry.fields.map((f) => f.ref).sort()).toEqual([
+      "7.get_customer.debts",
+      "7.get_customer.income",
+      "7.get_customer.name",
+      "7.get_customer.notes",
+    ]);
+  });
+
+  it("describe() classifies each top-level field with a preview", async () => {
+    const s = new HaloSession({ now: () => "T" });
+    const { envelope } = await s.ingest("get_customer", { id: 7 }, customer(4200));
+    const hints = await s.describe(envelope);
+    const income = hints.find((h) => h.ref === "7.income")!;
+    expect(income.kind).toBe("leaf");
+    expect(income.preview).toContain("4200");
+    const notes = hints.find((h) => h.ref === "7.notes")!;
+    expect(notes.kind).toBe("leaf");
+    expect(notes.shape.startsWith("string[")).toBe(true);
+  });
+});
+
 describe("HaloSession before any map exists", () => {
   it("fetch returns per-ref UnknownHandle and walk throws", async () => {
     const s = new HaloSession();

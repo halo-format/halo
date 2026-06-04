@@ -34,10 +34,13 @@ def create_encode_hook(session, threshold: int = _DEFAULT_THRESHOLD):
             return {}
 
         result = session.ingest(tool_name, input_data.get("tool_input"), value)
+        # Describe the fields (kind + bounded preview, read from the store) so the model sees a shape
+        # map it can fetch from directly, instead of opaque branch names it has to guess at.
+        hints = session.describe(result["envelope"])
         return {
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",
-                "updatedToolOutput": serialize_envelope(result["envelope"]),
+                "updatedToolOutput": serialize_envelope(result["envelope"], hints),
             }
         }
 
