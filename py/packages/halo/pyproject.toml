@@ -5,8 +5,9 @@ description = "Halo core: encode a value into a content-addressed navigable tree
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-# Core has zero runtime deps beyond stdlib hashlib (sha256) and a vetted JCS canonicalizer.
-dependencies = []
+# Core has zero runtime deps beyond stdlib hashlib (sha256) and a vetted JCS canonicalizer
+# (rfc8785), which is the interop oracle for canonical bytes.
+dependencies = ["rfc8785>=0.1.2"]
 
 [project.urls]
 Homepage = "https://github.com/halo-format/halo"
