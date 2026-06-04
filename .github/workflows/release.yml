@@ -9,10 +9,12 @@ name: Release
 #   3. Merging that PR to main runs this workflow again; with the versions bumped and no
 #      changesets left, it publishes to npm and PyPI, tags, and creates GitHub releases.
 #
-# Auth is OIDC trusted publishing — no stored npm/PyPI tokens. This depends on a one-time
-# registry-side setup: a trusted publisher on each npm package and each PyPI project pointing
-# at this repo, workflow `release.yml`, environment `release`, plus the `release` environment
-# and "Allow GitHub Actions to create and approve pull requests" enabled in repo settings.
+# Auth:
+#   - npm  — automation token in the NPM_TOKEN repo secret (published with provenance).
+#   - PyPI — OIDC trusted publishing, no stored token (configure a trusted publisher on each
+#            PyPI project pointing at this repo, workflow `release.yml`, environment `release`).
+# Repo settings also need the `release` environment and "Allow GitHub Actions to create and
+# approve pull requests" enabled.
 
 on:
   push:
@@ -21,7 +23,7 @@ on:
 permissions:
   contents: write # push the version PR branch, create tags + GitHub releases
   pull-requests: write # open/update the "version packages" PR
-  id-token: write # OIDC for npm + PyPI trusted publishing
+  id-token: write # PyPI OIDC trusted publishing + npm provenance attestation
 
 concurrency:
   group: release
@@ -46,8 +48,9 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: ts/pnpm-lock.yaml
+          registry-url: https://registry.npmjs.org # writes the token-auth .npmrc
 
-      # OIDC trusted publishing needs npm >= 11.5.1 (newer than what Node 22 ships).
+      # A recent npm so provenance attestation is generated reliably.
       - name: Update npm
         run: npm install -g npm@latest
 
@@ -66,6 +69,7 @@ jobs:
           commit: "release: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # used by `changeset publish` -> `npm publish`
 
       # ---- PyPI: only on a run that actually published the npm packages ----
       - name: Set up Python
