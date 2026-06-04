@@ -2,9 +2,10 @@
 //
 // installHalo(options, opts?) augments the SDK options with:
 //   - a PostToolUse encode hook that, above a size threshold, encodes a tool result into a shared
-//     store and sets updatedToolOutput to the envelope (the map), not the blob;
-//   - an in-process MCP server exposing halo_walk(ref) and halo_fetch(refs[]) backed by the same
-//     store, for the model to pull back the withheld leaves, verified on read.
+//     store and sets updatedToolOutput to a shape map (root kind + per-field kind and bounded
+//     preview), not the blob and not the hashed envelope;
+//   - an in-process MCP server exposing a single tool, halo_fetch(refs[]), backed by the same store,
+//     for the model to pull back the withheld leaves (and expand branches), verified on read.
 //
 // One call to adopt the adapter. Plumbing (the hook) is deterministic and fires always; the Skill
 // (loaded separately by the host) is guidance that shapes how the model navigates. The two stay

@@ -9,3 +9,6 @@ out/
 # Local audit-capture scratch output (raw streams, run logs)
 *.log
 *.jsonl
+
+# Local A/B benchmark output (token summaries written by agent/main.py)
+runs/

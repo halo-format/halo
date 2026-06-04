@@ -13,9 +13,10 @@ Token accounting is always on: every run prints a TOKENS summary (input / output
 
 Set ``HALO=1`` to route every tool result through the Halo adapter
 (``halo_format_claude.install_halo``): large results are encoded into a
-content-addressed map that stays out of the model's context, and the agent pulls
-back only the fields it needs via the in-process ``halo_walk`` / ``halo_fetch``
-tools. Run with and without it to compare token usage.
+content-addressed map that stays out of the model's context — the model sees a
+shape map (root kind + per-field kind and bounded preview) — and the agent pulls
+back only the fields it needs via the single in-process ``halo_fetch`` tool. Run
+with and without it to compare token usage.
 
 Requires ANTHROPIC_API_KEY and a seeded mimic_creditline database. Resolve any
 pending approval from a second terminal with scripts/officer_console.py.
@@ -56,7 +57,9 @@ MCP_TOOLS = [
     "mcp__mimic-creditline__creditline_notify_customer",
 ]
 
-HALO_TOOLS = ["mcp__halo__halo_walk", "mcp__halo__halo_fetch"]
+# One navigation tool only — the adapter exposes a single halo_fetch (a branch ref expands in place,
+# so there is no separate halo_walk).
+HALO_TOOLS = ["mcp__halo__halo_fetch"]
 
 # Project Skills. The halo skill (navigation guidance) is enabled ONLY for the Halo run (and only in
 # "skill" guidance mode) via the SDK `skills` option — the encode hook is the plumbing, the Skill is
@@ -69,15 +72,15 @@ HALO_GUIDANCE = """
 
 ## Halo: navigating large tool results
 
-Some tool results come back not as the full payload but as a *halo envelope* — a compact map
-`{ "halo": "1", "view": { "summary", "branches": { name: handle } }, "source": { "id": "<mapId>" } }`;
-the data is held, verified, in a store out of your context. When you receive one: read
-`view.summary` and the branch names, then fetch ONLY the fields you need in a single
+Some tool results come back not as the full payload but as a *halo shape map* — a `[halo] map "<id>"
+— <root kind> …` note followed by one line per field giving its ref, kind, and a bounded preview; the
+data is held, verified, in a store out of your context. When you receive one: read the previews
+(they often answer the step in place), then fetch ONLY the fields you still need in a single
 `mcp__halo__halo_fetch` call, passing a list of refs like `["<mapId>.credit_score", ...]` (batch
-them; each value is verified). Use `mcp__halo__halo_walk` on a ref first only if a branch is itself
-large. For a bureau report fetch `credit_score`, `total_outstanding_debt`, `delinquencies_24m`,
-`hard_inquiries_6m`, `bureau_report_id` — not the `tradelines`/`recent_inquiries`/`public_records`
-bulk. Use fetched values as if returned inline.
+them; each value is verified). A `[branch]` ref is not a value — `halo_fetch` it to get its sub-refs
+(there is no separate walk tool), then fetch the leaf. For a bureau report fetch `credit_score`,
+`total_outstanding_debt`, `delinquencies_24m`, `hard_inquiries_6m`, `bureau_report_id` — not the
+`tradelines`/`recent_inquiries`/`public_records` bulk. Use fetched values as if returned inline.
 """
 
 

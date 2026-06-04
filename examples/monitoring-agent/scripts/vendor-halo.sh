@@ -5,9 +5,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-TS=/Users/aj/halo/ts/packages
+# Locate the monorepo root relative to this example (examples/monitoring-agent -> repo root),
+# or override with HALO_REPO_ROOT if the example lives outside the monorepo.
+REPO_ROOT="${HALO_REPO_ROOT:-$(cd ../.. && pwd)}"
+TS="$REPO_ROOT/ts/packages"
 for pkg in halo claude; do
-  test -f "$TS/$pkg/dist/index.js" || { echo "build $pkg first: (cd /Users/aj/halo/ts && pnpm --filter @halo-format/$pkg build)"; exit 1; }
+  test -f "$TS/$pkg/dist/index.js" || { echo "build $pkg first: (cd $REPO_ROOT/ts && pnpm --filter @halo-format/$pkg build)"; exit 1; }
   rm -rf "node_modules/@halo-format/$pkg"
   mkdir -p "node_modules/@halo-format/$pkg"
   cp -R "$TS/$pkg/package.json" "$TS/$pkg/dist" "node_modules/@halo-format/$pkg/"
