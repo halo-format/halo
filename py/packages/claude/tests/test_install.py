@@ -44,8 +44,8 @@ def test_end_to_end_hook_encodes_and_session_navigates():
     out = asyncio.run(callback(input_data, "u1", {}))
     assert "hookSpecificOutput" in out
 
-    got = session.fetch(["99.bureau_report.profile"])
-    assert got["99.bureau_report.profile"] == {
+    got = session.fetch(["99.profile"])  # single result -> flat, fields top-level
+    assert got["99.profile"] == {
         "ok": True,
         "value": {"income": {"monthly": 4200}, "debts": {"monthly": 2604}},
     }

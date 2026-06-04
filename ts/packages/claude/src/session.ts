@@ -17,6 +17,7 @@
 
 import {
   type HaloEnvelope,
+  type Handle,
   type JsonValue,
   type Store,
   type WalkResult,
@@ -25,9 +26,22 @@ import {
   MemoryStore,
   Navigator,
   encode,
-  extend,
+  branchNode,
+  serialize,
+  deriveSummary,
+  decode,
+  buildEnvelope,
 } from "@halo-format/halo";
 import { argJoin, type KeyOf } from "./accumulate.js";
+
+/** A short branch label for an accumulated tool: strip the `mcp__<server>__` prefix. */
+function branchName(toolName: string): string {
+  if (toolName.startsWith("mcp__")) {
+    const parts = toolName.split("__");
+    if (parts.length >= 3) return parts.slice(2).join("__");
+  }
+  return toolName;
+}
 
 export type SessionOptions = {
   store?: Store;
@@ -46,6 +60,8 @@ export class HaloSession {
 
   // id -> latest envelope for that entity, for ref resolution and accumulation.
   private readonly maps = new Map<string, HaloEnvelope>();
+  // id -> { branchName: subtreeRootHandle }: the per-tool trees folded into each entity map.
+  private readonly entityTools = new Map<string, Record<string, Handle>>();
   // One navigator, seeded by the first map and extended with register() as maps appear.
   private navigator: Navigator | null = null;
   private synthetic = 0;
@@ -58,17 +74,33 @@ export class HaloSession {
   }
 
   /**
-   * Encode a tool result into the store and return the resulting envelope. Related calls (per keyOf)
-   * fold into one entity map; unrelated calls each get a fresh map id `m1`, `m2`, ...
+   * Encode a tool result into the store and return the resulting envelope.
+   *
+   * A map's FIRST result is encoded flat — the value's own fields become the top-level branches, so
+   * the model sees them in the envelope and can batch-fetch leaves with no extra walk. Only when a
+   * SECOND tool result accumulates into the same entity map (per keyOf) do we namespace each tool's
+   * tree under its (short) name, since then the field names would otherwise collide.
    */
   async ingest(toolName: string, toolInput: unknown, value: JsonValue): Promise<IngestResult> {
     const id = this.keyOf(toolName, toolInput) ?? `m${++this.synthetic}`;
-    const prior = this.maps.get(id);
     const opts = { store: this.store, alg: this.alg };
 
-    const { envelope } = prior
-      ? await extend(prior.root, toolName, value, opts) // fold into the entity's existing map
-      : await encode({ [toolName]: value }, opts); // first call for this entity, named by endpoint
+    // Encode the value's own tree once; reuse its root as this tool's subtree under the entity.
+    const sub = await encode(value, opts);
+    const tools = this.entityTools.get(id) ?? {};
+    tools[branchName(toolName)] = sub.handle;
+    this.entityTools.set(id, tools);
+
+    let envelope: HaloEnvelope;
+    if (Object.keys(tools).length === 1) {
+      // Single result: the map IS the value's tree — fields are top-level, no walk needed.
+      envelope = sub.envelope;
+    } else {
+      // Accumulation: namespace each tool's tree under its name (reusing every subtree handle; only
+      // the new root node is stored).
+      const root = await this.store.put(serialize(branchNode(deriveSummary(null, tools), tools)));
+      envelope = buildEnvelope(root, decode(await this.store.get(root)), this.alg);
+    }
 
     // source identifies the map and traces it to the call; it is envelope-only and never hashed.
     envelope.source = { id, tool: toolName, args: toolInput as JsonValue, ts: this.now() };

@@ -48,8 +48,9 @@ describe("installHalo wiring", () => {
     expect((out as { hookSpecificOutput?: unknown }).hookSpecificOutput).toBeDefined();
 
     // The hook withheld the blob; the model pulls back just the leaf it needs, verified.
-    const got = await session.fetch(["99.bureau_report.profile"]);
-    expect(got["99.bureau_report.profile"]).toEqual({
+    // Single result -> flat, so fields are top-level (no tool-name wrapper).
+    const got = await session.fetch(["99.profile"]);
+    expect(got["99.profile"]).toEqual({
       ok: true,
       value: { income: { monthly: 4200 }, debts: { monthly: 2604 } },
     });

@@ -35,12 +35,14 @@ def parse_tool_output(raw):
         return None
     if isinstance(raw, str):
         return _parse_maybe_json(raw)
-    if isinstance(raw, dict):
+    # The MCP result may arrive as {"content": [{type:text,text}]} OR as the bare content-block list
+    # [{type:text,text}] (the shape some SDK hosts hand the hook). Unwrap either.
+    if isinstance(raw, (dict, list)):
         text = _extract_content_text(raw)
         if text is not None:
             return _parse_maybe_json(text)
         return raw
-    return raw  # list | int | float | bool
+    return raw  # int | float | bool
 
 
 def _parse_maybe_json(s: str):
@@ -56,10 +58,17 @@ def _parse_maybe_json(s: str):
     return s
 
 
-def _extract_content_text(obj: dict):
-    """Unwrap the MCP content shape to its text, concatenating multiple text blocks."""
-    content = obj.get("content")
-    if not isinstance(content, list):
+def _extract_content_text(value):
+    """Unwrap the MCP content-block shape to its text, concatenating text blocks.
+
+    Accepts both the ``{"content": [...]}`` dict and a bare ``[{type:text,text}]`` list. Returns None
+    when the value is not content blocks (a genuine list/dict result), so it is encoded as-is.
+    """
+    if isinstance(value, list):
+        content = value
+    elif isinstance(value, dict) and isinstance(value.get("content"), list):
+        content = value["content"]
+    else:
         return None
     texts = [
         block["text"]

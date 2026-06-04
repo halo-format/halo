@@ -38,7 +38,9 @@ export function parseToolOutput(raw: RawToolOutput): JsonValue | undefined {
   if (raw === undefined || raw === null) return undefined;
   if (typeof raw === "string") return parseMaybeJson(raw);
   if (typeof raw === "object") {
-    const text = extractContentText(raw as Record<string, unknown>);
+    // The MCP result may arrive as `{ content: [{type:text,text}] }` OR as the bare content-block
+    // array `[{type:text,text}]` (the shape some SDK hosts hand the hook). Unwrap either.
+    const text = extractContentText(raw);
     if (text !== undefined) return parseMaybeJson(text);
     return raw as JsonValue;
   }
@@ -60,10 +62,16 @@ function parseMaybeJson(s: string): JsonValue {
   return s;
 }
 
-// Unwrap the MCP CallToolResult content shape to its text, concatenating multiple text blocks.
-function extractContentText(obj: Record<string, unknown>): string | undefined {
-  const content = obj.content;
-  if (!Array.isArray(content)) return undefined;
+// Unwrap the MCP content-block shape to its text, concatenating multiple text blocks. Accepts both
+// the `{ content: [...] }` object and a bare `[{type:text,text}]` array. Returns undefined when the
+// value is not content blocks (a genuine array/object result), so it is encoded as-is.
+function extractContentText(value: unknown): string | undefined {
+  const content = Array.isArray(value)
+    ? value
+    : value && typeof value === "object" && Array.isArray((value as { content?: unknown }).content)
+      ? ((value as { content: unknown[] }).content)
+      : null;
+  if (!content) return undefined;
   const texts: string[] = [];
   for (const block of content) {
     if (block && typeof block === "object" && (block as { type?: unknown }).type === "text") {

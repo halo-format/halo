@@ -36,6 +36,15 @@ describe("parseToolOutput", () => {
     ).toBe("ab");
   });
 
+  it("unwraps a BARE content-block array (the shape some SDK hosts hand the hook)", () => {
+    expect(parseToolOutput([{ type: "text", text: '{"issue":{"id":"1"},"events":[]}' }])).toEqual({
+      issue: { id: "1" },
+      events: [],
+    });
+    // A genuine JSON array (not content blocks) is returned as-is, not unwrapped.
+    expect(parseToolOutput([1, 2, 3])).toEqual([1, 2, 3]);
+  });
+
   it("returns already-structured values unchanged, and undefined for nullish", () => {
     expect(parseToolOutput({ a: [1, 2] })).toEqual({ a: [1, 2] });
     expect(parseToolOutput(42)).toBe(42);

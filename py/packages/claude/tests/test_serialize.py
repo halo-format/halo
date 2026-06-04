@@ -36,6 +36,16 @@ def test_parse_tool_output_unwraps_mcp_content_block():
     ) == "ab"
 
 
+def test_parse_tool_output_unwraps_bare_content_block_array():
+    # The shape some SDK hosts hand the hook: a bare [{type:text,text}] list.
+    assert parse_tool_output([{"type": "text", "text": '{"issue":{"id":"1"},"events":[]}'}]) == {
+        "issue": {"id": "1"},
+        "events": [],
+    }
+    # A genuine JSON array (not content blocks) is returned as-is.
+    assert parse_tool_output([1, 2, 3]) == [1, 2, 3]
+
+
 def test_parse_tool_output_passthrough_and_none():
     assert parse_tool_output({"a": [1, 2]}) == {"a": [1, 2]}
     assert parse_tool_output(42) == 42
