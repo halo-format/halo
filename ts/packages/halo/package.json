@@ -18,9 +18,24 @@
     "test": "vitest run"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "halo",
+    "content-addressed",
+    "merkle",
+    "ai-agents",
+    "tool-results",
+    "llm"
+  ],
+  "homepage": "https://github.com/halo-format/halo#readme",
+  "bugs": "https://github.com/halo-format/halo/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/halo-format/halo"
+    "url": "git+https://github.com/halo-format/halo.git",
+    "directory": "ts/packages/halo"
   },
   "dependencies": {
     "canonicalize": "^3.0.0"

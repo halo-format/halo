@@ -187,7 +187,10 @@ Issues and pull requests are welcome. Two ground rules keep the format coherent:
 2. **Keep dependencies strictly downward.** The core knows nothing about agents, MCP, or hooks;
    adapters depend on the core, never the reverse.
 
-Run the relevant port's tests (above) before opening a PR.
+Run the relevant port's tests (above) before opening a PR. If your change should ship in a release,
+add a changeset (`cd ts && pnpm changeset`) and commit it with your PR. All four packages move
+together on one version and are published from CI; merging the generated "version packages" PR cuts
+the release.
 
 ## License
 
