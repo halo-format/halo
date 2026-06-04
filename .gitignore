@@ -25,6 +25,9 @@ coverage/
 .coverage
 htmlcov/
 
+# Release: Python distributions built in CI before the PyPI upload
+dist-python/
+
 # Editor / OS
 .DS_Store
 .idea/

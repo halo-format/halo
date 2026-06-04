@@ -1,0 +1,90 @@
+name: Release
+
+# Changesets-driven release for all four packages on one shared version.
+#
+# Flow:
+#   1. Feature PRs land on main carrying a `.changeset/*.md` file (run `pnpm changeset`).
+#   2. This workflow opens/updates a "release: version packages" PR that bumps every
+#      package (npm + PyPI, kept in lockstep) and writes changelogs.
+#   3. Merging that PR to main runs this workflow again; with the versions bumped and no
+#      changesets left, it publishes to npm and PyPI, tags, and creates GitHub releases.
+#
+# Auth is OIDC trusted publishing — no stored npm/PyPI tokens. See RELEASING.md for the
+# one-time registry-side setup this depends on.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # push the version PR branch, create tags + GitHub releases
+  pull-requests: write # open/update the "version packages" PR
+  id-token: write # OIDC for npm + PyPI trusted publishing
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ts/pnpm-lock.yaml
+
+      # OIDC trusted publishing needs npm >= 11.5.1 (newer than what Node 22 ships).
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install workspace
+        working-directory: ts
+        run: pnpm install --frozen-lockfile
+
+      - name: Create Release PR or publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          cwd: ts
+          version: pnpm run version
+          publish: pnpm run release
+          title: "release: version packages"
+          commit: "release: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---- PyPI: only on a run that actually published the npm packages ----
+      - name: Set up Python
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build Python distributions
+        if: steps.changesets.outputs.published == 'true'
+        # Re-sync the version from the just-released npm package so the sdist/wheel carry
+        # it even if the version step's pyproject edit (outside the Changesets cwd) was
+        # not committed. Idempotent.
+        run: |
+          node ts/scripts/sync-python-version.mjs
+          python -m pip install --upgrade build
+          python -m build py/packages/halo  --outdir dist-python
+          python -m build py/packages/claude --outdir dist-python
+
+      - name: Publish halo-format + halo-format-claude to PyPI
+        if: steps.changesets.outputs.published == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-python
