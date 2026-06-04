@@ -9,7 +9,7 @@
     "typecheck": "pnpm -r typecheck",
     "changeset": "changeset",
     "version": "changeset version && node scripts/sync-python-version.mjs && pnpm install --lockfile-only",
-    "release": "pnpm -r build && changeset publish"
+    "release": "pnpm -r build && changeset publish --no-git-tag"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
