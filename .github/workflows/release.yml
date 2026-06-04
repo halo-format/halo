@@ -9,8 +9,10 @@ name: Release
 #   3. Merging that PR to main runs this workflow again; with the versions bumped and no
 #      changesets left, it publishes to npm and PyPI, tags, and creates GitHub releases.
 #
-# Auth is OIDC trusted publishing — no stored npm/PyPI tokens. See RELEASING.md for the
-# one-time registry-side setup this depends on.
+# Auth is OIDC trusted publishing — no stored npm/PyPI tokens. This depends on a one-time
+# registry-side setup: a trusted publisher on each npm package and each PyPI project pointing
+# at this repo, workflow `release.yml`, environment `release`, plus the `release` environment
+# and "Allow GitHub Actions to create and approve pull requests" enabled in repo settings.
 
 on:
   push:
