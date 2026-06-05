@@ -281,6 +281,42 @@ HALO=1 RUN_LABEL=halo     python -m scripts.profile_ab CLM-PROF
 PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer
 ```
 
+### The same A/B on the raw Claude API — where Halo wins
+
+`scripts/run_raw_api.py` runs the identical claim on a hand-built tool-use loop
+over `anthropic.messages.create` (no Agent SDK, no CLI). Here the runtime does
+**not** spill large tool results and the prefix is small (just the system prompt +
+13 tool schemas), so the bytes Halo keeps out of context are bytes the baseline
+actually re-sends every turn. Measured on `claude-sonnet-4-6`, real API calls:
+
+| `get_claim` | Arm | total tokens | cache_read | **cost** | turns | halo_fetch |
+|-------------|-----|-------------:|-----------:|---------:|------:|-----------:|
+| ~12 KB (8 attach.)  | baseline | 104,245 | 64,797 | $0.2099 | 10 | 0 |
+| ~12 KB              | **halo** | 89,569 | 56,757 | **$0.1888** | 11 | 1 |
+| ~56 KB (40 attach.) | baseline | 250,100 | 169,496 | $0.3919 | 11 | 0 |
+| ~56 KB              | **halo** | 94,409 | 60,797 | **$0.2055** | 10 | 1 |
+
+**The win scales with payload, opposite to the Claude Code runtime.** On the raw
+API Halo cuts **−14% tokens / −10% cost** on the small claim and **−62% tokens /
+−48% cost** on the large one. The reason is stark in the numbers: the baseline
+balloons from 104 K → 250 K tokens as the claim grows (it re-reads the 56 KB body
+every turn), while the **halo arm stays flat at ~90–94 K regardless of payload
+size** — it fetches only `lines` and never the attachment bulk, so claim size
+barely moves its bill. The bigger and heavier the claim, the more Halo saves.
+
+```bash
+set -a && . ./.env && set +a            # ANTHROPIC_API_KEY + DB DSN
+HALO=0 RUN_LABEL=raw_baseline python -m scripts.run_raw_api CLM-PROF
+HALO=1 RUN_LABEL=raw_halo     python -m scripts.run_raw_api CLM-PROF
+PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer   # then re-run for the big-payload row
+```
+
+**Bottom line across both runtimes:** on Claude Code, the host already spills large
+results and the prefix is heavy, so adopt Halo there for the verifiable-evidence
+property, not token savings. On the raw Claude API, Halo is a real and growing cost
+saver — ~10% on a light claim, ~48% on a heavy one — *and* you still get the
+tamper-evident evidence trail.
+
 ## Layout
 
 ```
