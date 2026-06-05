@@ -195,10 +195,55 @@ scripts/run_token_ab.sh halo
 ```
 
 Each run writes a token summary to `runs/<label>.json`. A live agent is
-non-deterministic, so run each arm a few times and compare means. Halo's clean win
-is large payloads where the decision needs few fields — here, the claim's clinical
-attachments, the claim history, and the whole-plan benefit rules, none of which the
-adjudication reads.
+non-deterministic, so run each arm a few times and compare means.
+
+### A measured profile (with vs without Halo)
+
+`scripts/profile_ab.py` adjudicates the seeded **all-pay** profiling claim
+`CLM-PROF` (no human gate, so both arms run unattended) and writes
+`runs/prof_<label>.json` after every streamed message. Measured on
+`claude-sonnet-4-6`, one run per arm:
+
+| Arm | get_claim payload | total tokens | output | cache_read | turns | tool calls | halo_fetch |
+|-----|------------------:|-------------:|-------:|-----------:|------:|-----------:|-----------:|
+| baseline      | ~6.8 KB | 504,463 | 9,092 | 476,725 | 27 | 23 | 0 |
+| **halo**      | ~6.8 KB | 617,486 | 9,791 | 589,481 | 31 | 27 | 1 |
+| baseline_big  | ~56 KB  | 507,926 | 10,564 | 477,735 | 28 | 24 | 0 |
+| **halo_big**  | ~56 KB  | 687,237 | 10,224 | 657,739 | 34 | 30 | 1 |
+
+The deterministic part — **what enters the model's context for the one big
+result** — is where Halo is unambiguous:
+
+| `get_claim` | full payload | Halo shape map the model sees | reduction | attachment bulk kept out |
+|-------------|-------------:|------------------------------:|:---------:|-------------------------:|
+| small (8 attachments)  |  6,785 B | 1,040 B | **85%** |  5,398 B |
+| big (40 attachments)   | 56,247 B |   936 B | **98%** | 54,526 B |
+
+**How to read this honestly.** Halo cuts *per-result* context by 85–98% and the
+agent provably fetches only `lines`, never the attachment bodies. But the
+*end-to-end token count* in this runtime does **not** drop — it rises ~22–35% —
+for two compounding reasons: (1) the cached prefix (CLAUDE.md + four Skills + the
+13 tool schemas ≈ 480 K cache-read tokens) dwarfs any single claim, so the bytes
+Halo saves are noise against it; and (2) the Claude Code CLI already spills large
+tool results to scratch files on its own (note `baseline_big` ≈ `baseline`), so
+Halo's encode hook is competing with built-in handling while adding navigation
+turns (the extra `halo_fetch` + Skill/ToolSearch round-trips → +3–6 turns).
+
+So in the Claude Code runtime, **adopt Halo here for the verifiable-evidence
+property** — content-addressed, tamper-evident `agent.decisions.evidence`, which
+is the entire point of a regulated adjudication agent — not as a token-reduction
+play on a single modest claim. Halo's token win shows up where a result is both
+large *and* in-context (no host spill) *and* the cached prefix is small relative
+to it; scale `PROFILE_ATTACHMENTS` and shrink the prompt to move toward that
+regime.
+
+```bash
+# reproduce (the seeded CLM-PROF auto-finalizes — no examiner needed):
+HALO=0 RUN_LABEL=baseline python -m scripts.profile_ab CLM-PROF
+HALO=1 RUN_LABEL=halo     python -m scripts.profile_ab CLM-PROF
+# larger payload: re-seed with more attachments, then re-run
+PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer
+```
 
 ## Layout
 
@@ -213,7 +258,8 @@ mcp_servers/mimic_payer/
   models.py                 Pydantic tool contracts
   db.py                     asyncpg pool (least-privilege agent role)
 db/                         ext + agent schemas, role/grants, seed
-scripts/                    init_db.sh, run_demo.py, reviewer_console.py, run_token_ab.sh
+scripts/                    init_db.sh, run_demo.py, reviewer_console.py,
+                            run_token_ab.sh, profile_ab.py (with/without-Halo A/B)
 ```
 
 ## The swap to real systems, later

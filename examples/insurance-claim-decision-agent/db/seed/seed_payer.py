@@ -234,9 +234,46 @@ async def seed() -> None:
                 f"CL-2001-{ln:02d}", CLEAN_CLAIM, ln, code, dt.date(2026, 5, 22), charged,
             )
 
+        # ── PROFILING claim CLM-PROF — all-pay, no history, Halo-heavy ─────────
+        # A fresh member with no claim history (so no duplicate/frequency pends),
+        # all clean PAY lines, below the auto-finalize ceiling → no human gate, so
+        # scripts/profile_ab.py can run both arms unattended. PROFILE_ATTACHMENTS
+        # controls how bulky get_claim is (the attachment bodies the decision never
+        # reads) — the payload Halo keeps out of context. Bump it to scale the test.
+        n_att = int(os.environ.get("PROFILE_ATTACHMENTS", "8"))
+        await conn.execute(
+            """INSERT INTO ext.members (id, first_name, last_name, dob, plan_id, group_id,
+               effective_date, term_date, status) VALUES ($1,'Sam','Profile','1990-01-15',$2,
+               'GRP-ACME','2021-01-01',NULL,'active')""",
+            "MBR-PROF", PLAN_ID,
+        )
+        await conn.execute(
+            """INSERT INTO ext.accumulators (member_id, plan_year, deductible_met_cents,
+               annual_max_used_cents, oop_met_cents) VALUES ('MBR-PROF',$1,5000,0,5000)""",
+            PLAN_YEAR,
+        )
+        prof_lines = [(1, "D0120", None, None, 6500), (2, "D1110", None, None, 12000),
+                      (3, "D2391", "3", "O", 18000)]   # all covered, in-network, within limits
+        total3 = sum(c for *_, c in prof_lines)
+        await conn.execute(
+            """INSERT INTO ext.claims (id, claim_number, member_id, provider_id, date_received,
+               place_of_service, diagnosis_codes, attachments, total_charged_cents, status)
+               VALUES ('CLM-PROF','CN-PROF','MBR-PROF',$1,$2,'11',$3::jsonb,$4::jsonb,$5,'received')""",
+            PROVIDER_ID, dt.date(2026, 6, 1), json.dumps(["K02.9", "Z01.20"]),
+            json.dumps([f"ATT-{i}" for i in range(1, n_att + 1)]), total3,
+        )
+        for ln, code, tooth, surface, charged in prof_lines:
+            await conn.execute(
+                """INSERT INTO ext.claim_lines (id, claim_id, line_number, procedure_code, tooth,
+                   surface, date_of_service, units, charged_cents, status)
+                   VALUES ($1,'CLM-PROF',$2,$3,$4,$5,'2026-04-10',1,$6,'pending')""",
+                f"CLP-{ln}", ln, code, tooth, surface, charged,
+            )
+
         print("Seeded mimic_payer:")
         print(f"  demo claim   {DEMO_CLAIM} (Dana Whitfield) — pay/pay/reduce/pend/deny → human review")
         print(f"  clean claim  {CLEAN_CLAIM} (Marco Reyes)   — all pay, below ceiling → auto-finalize")
+        print(f"  profile claim CLM-PROF (Sam Profile)      — all pay, {n_att} attachments → A/B harness")
         print(f"  plan {PLAN_ID}: annual max $1500, deductible $50, coins 100/80/50")
         print(f"  {len(rule_rows)} benefit rules, {len(REASON_CODES)} reason codes")
     finally:
