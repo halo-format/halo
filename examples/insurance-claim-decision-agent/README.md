@@ -1,10 +1,13 @@
 # Insurance Claim Decision Agent
 
-A human-in-the-loop **claim adjudication** agent built on the **Claude Agent
-SDK**. It takes a submitted claim and decides each service line — **pay**,
-**deny**, **reduce**, or **pend** for human review — with the patient
-responsibility and the standard X12 reason codes (CARC/RARC). It acts only through
-a **custom MCP server** (`mimic-payer`) backed by Postgres.
+A human-in-the-loop **claim adjudication** agent that runs on **both** Claude
+runtimes — the **Claude Agent SDK** (and Claude Code CLI) *and* the **raw Claude
+Messages API** (`anthropic.messages.create` with a manual tool-use loop). It takes
+a submitted claim and decides each service line — **pay**, **deny**, **reduce**,
+or **pend** for human review — with the patient responsibility and the standard
+X12 reason codes (CARC/RARC). It acts only through a **custom MCP server**
+(`mimic-payer`) backed by Postgres; on the raw API the same tools are declared as
+tool definitions and executed in-process.
 
 All claim / member / benefit / accumulator / network / fee-schedule data is
 simulated in an `ext.*` schema shaped like the payer's systems and the X12
@@ -149,6 +152,39 @@ This path is verified end to end: the model runs intake → coverage rules →
 per-line engine adjudication → record → human review → post, producing the
 mixed-outcome EOB below.
 
+### Run it against the raw Claude Messages API
+
+The same agent runs without the Agent SDK or the CLI, on a hand-built tool-use
+loop over `anthropic.Anthropic().messages.create(...)` — `scripts/run_raw_api.py`.
+The 13 `mimic-payer` tools become raw tool definitions, dispatched in-process to
+the same server functions; the deterministic engine, the human-review gate, the
+evidence store, and the reason-code reference are reused unchanged. This is the
+"tools are the swap point, everything above them is portable" property made
+literal — only the runtime around the tools differs.
+
+```bash
+set -a && . ./.env && set +a            # ANTHROPIC_API_KEY + DB DSN
+# CLM-PROF auto-finalizes (no examiner needed); CLM-1001 needs reviewer_console auto.
+HALO=0 RUN_LABEL=raw_baseline python -m scripts.run_raw_api CLM-PROF
+HALO=1 RUN_LABEL=raw_halo     python -m scripts.run_raw_api CLM-PROF   # encode + halo_fetch by hand
+```
+
+`HALO=1` replaces the Agent-SDK `PostToolUse` hook with an explicit encode step in
+the loop: a large tool result is encoded into the published adapter's `HaloSession`
+store and the model receives the shape map instead of the payload, plus a
+`halo_fetch` tool — the raw Messages API has no hook, so the adapter's mechanism is
+driven by hand here. Each run writes `runs/<label>.json` (tokens, turns, tool
+calls, **estimated cost**, `halo_fetch` count). This is the runtime where Halo's
+token win actually materializes — the raw API re-sends tool results in context
+every turn (no host file-spill) and the prefix is small, so keeping the bulk out
+pays off (see [Token comparison](#token-comparison-with-halo)).
+
+A no-API-key smoke test of the tool dispatch + Halo encode/`halo_fetch` plumbing:
+
+```bash
+python -m scripts.run_raw_api CLM-PROF --selftest
+```
+
 ## The seeded demo claim
 
 **CLM-1001 (Dana Whitfield)** has five lines engineered to sweep every outcome on
@@ -250,7 +286,7 @@ PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer
 ```
 agent/                      Claude Agent SDK runtime
   main.py                   registers the MCP server, loads skills, runs a claim
-  prompts.py                system prompt + model/prompt provenance hash
+  prompts.py                system prompt + model/prompt provenance hash (shared by both runtimes)
 .claude/skills/             Skills the SDK loads (intake/coverage/adjudicate/explain[/halo])
 mcp_servers/mimic_payer/
   server.py                 the 13 MCP tools
@@ -259,7 +295,8 @@ mcp_servers/mimic_payer/
   db.py                     asyncpg pool (least-privilege agent role)
 db/                         ext + agent schemas, role/grants, seed
 scripts/                    init_db.sh, run_demo.py, reviewer_console.py,
-                            run_token_ab.sh, profile_ab.py (with/without-Halo A/B)
+                            run_token_ab.sh, profile_ab.py (with/without-Halo A/B),
+                            run_raw_api.py (raw Claude Messages API runtime)
 ```
 
 ## The swap to real systems, later
