@@ -1,0 +1,20 @@
+{
+  "enabledMcpjsonServers": ["mimic-payer"],
+  "permissions": {
+    "allow": [
+      "mcp__mimic-payer__payer_get_agent_provenance",
+      "mcp__mimic-payer__payer_get_claim",
+      "mcp__mimic-payer__payer_get_member_coverage",
+      "mcp__mimic-payer__payer_get_benefit_rules",
+      "mcp__mimic-payer__payer_get_accumulators",
+      "mcp__mimic-payer__payer_get_claim_history",
+      "mcp__mimic-payer__payer_check_network",
+      "mcp__mimic-payer__payer_get_allowed_amount",
+      "mcp__mimic-payer__payer_lookup_reason_code",
+      "mcp__mimic-payer__payer_adjudicate_line",
+      "mcp__mimic-payer__payer_record_decision",
+      "mcp__mimic-payer__payer_request_review",
+      "mcp__mimic-payer__payer_post_adjudication"
+    ]
+  }
+}

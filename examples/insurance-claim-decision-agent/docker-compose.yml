@@ -1,0 +1,26 @@
+# One Postgres engine, two schemas (created by scripts/init_db.sh):
+#   ext.*   — stands in for the payer systems (claims, members, benefits,
+#             accumulators, network, fee schedule), shaped like the X12
+#             transactions; the agent reads it and posts the 835/EOB back to it.
+#   agent.* — the agent's own state: sessions, the content-addressed evidence
+#             store, the human-review approvals, and the per-line decision record.
+services:
+  postgres:
+    image: postgres:16
+    container_name: insurance-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - insurance_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  insurance_pgdata:
