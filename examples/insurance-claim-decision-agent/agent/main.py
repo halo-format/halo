@@ -108,7 +108,11 @@ def build_options(halo: bool):
         skills=BASE_SKILLS + (["halo-navigation"] if use_skill else []),
         allowed_tools=MCP_TOOLS + (HALO_TOOLS if halo else []),
         thinking={"type": "adaptive", "display": "summarized"},
-        permission_mode="bypassPermissions",
+        # bypassPermissions is the convenient default for an unattended example; the
+        # project's .claude/settings.json already allow-lists every tool, so set
+        # AGENT_PERMISSION_MODE=default in environments where bypass is disallowed
+        # (e.g. running as root) and the allow-list still auto-approves the tools.
+        permission_mode=os.environ.get("AGENT_PERMISSION_MODE", "bypassPermissions"),
         mcp_servers={
             "mimic-payer": {
                 "command": sys.executable,
