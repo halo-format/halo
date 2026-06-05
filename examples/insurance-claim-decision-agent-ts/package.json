@@ -1,0 +1,25 @@
+{
+  "name": "insurance-claim-decision-agent-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript port of the insurance-claim-decision-agent, running on the RAW Claude Messages API (@anthropic-ai/sdk) with a manual tool-use loop and an opt-in Halo arm driven by the @halo-format/halo core. Same agent as the Python example; a different runtime.",
+  "scripts": {
+    "initdb": "bash scripts/init_db.sh",
+    "seed": "tsx db/seed.ts",
+    "raw": "tsx src/run-raw-api.ts",
+    "reviewer": "tsx src/reviewer-console.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.101.0",
+    "@halo-format/halo": "^0.1.1",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
