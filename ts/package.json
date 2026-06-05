@@ -8,7 +8,7 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "changeset": "changeset",
-    "version": "changeset version && node scripts/sync-python-version.mjs && pnpm install --lockfile-only",
+    "version": "changeset version && node scripts/sync-python-version.mjs && pnpm install --lockfile-only && git add ../py/packages/halo/pyproject.toml ../py/packages/claude/pyproject.toml",
     "release": "pnpm -r build && changeset publish --no-git-tag"
   },
   "devDependencies": {

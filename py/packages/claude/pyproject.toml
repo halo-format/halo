@@ -1,6 +1,6 @@
 [project]
 name = "halo-format-claude"
-version = "0.0.0"
+version = "0.1.0"
 description = "Halo host adapter for the Claude Agent SDK (Python): a PostToolUse encode hook plus in-process halo_walk / halo_fetch MCP tools. install_halo() wires it in one call."
 readme = "README.md"
 requires-python = ">=3.10"
