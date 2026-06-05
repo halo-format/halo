@@ -1,0 +1,48 @@
+name: Publish Python (manual)
+
+# Manually build and publish the two Python packages at main's current version to PyPI.
+#
+# Use this to recover a version where the main release flow already ran but PyPI was skipped
+# (e.g. the first 0.1.0 release), or as an escape hatch. Auth is OIDC trusted publishing, so it
+# needs the same `release` environment + per-project trusted publisher (workflow
+# `publish-python.yml` OR `release.yml` — add both filenames to each PyPI project's trusted
+# publisher, or point them at this one for manual runs).
+#
+# Publishes whatever version is in py/packages/*/pyproject.toml on the chosen ref. `skip-existing`
+# makes re-runs safe (an already-published version is skipped, not an error).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # PyPI OIDC trusted publishing
+
+concurrency:
+  group: publish-python
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build + publish to PyPI
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade build
+          python -m build py/packages/halo  --outdir dist-python
+          python -m build py/packages/claude --outdir dist-python
+          echo "Built:" && ls dist-python
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-python
+          skip-existing: true
