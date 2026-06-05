@@ -7,8 +7,15 @@ name: Release
 #   2. This workflow opens/updates a "release: version packages" PR that bumps every
 #      package (npm + PyPI, kept in lockstep) and writes changelogs.
 #   3. Merging that PR to main runs this workflow again; with no changesets left and the
-#      version not yet tagged, it publishes to npm + PyPI and creates ONE `vX.Y.Z` git tag
-#      and a single GitHub release covering all four packages.
+#      version not yet tagged, it publishes to npm and creates ONE `vX.Y.Z` git tag and a
+#      single GitHub release covering all packages.
+#
+# The two PyPI packages are published by separate, per-package workflows
+# (`publish-python-halo.yml` and `publish-python-claude.yml`). Each PyPI project only allows
+# one trusted publisher per (repo, workflow file, environment), so the two projects need two
+# distinct workflow files — they cannot share this one. Those workflows trigger automatically
+# off this one via `workflow_run` (a `push`/`release` trigger would NOT fire, because the tag
+# and release created here use GITHUB_TOKEN, which GitHub suppresses to prevent workflow loops).
 #
 # Publishing is decoupled from the Changesets action on purpose: the action ONLY opens the
 # version PR here (its `published` output is unreliable once per-package git tags are
@@ -16,8 +23,7 @@ name: Release
 #
 # Auth:
 #   - npm  — automation token in the NPM_TOKEN repo secret (published with provenance).
-#   - PyPI — OIDC trusted publishing, no stored token (configure a trusted publisher on each
-#            PyPI project pointing at this repo, workflow `release.yml`, environment `release`).
+#   - PyPI — handled by the per-package workflows via OIDC trusted publishing (see those files).
 # Repo settings also need the `release` environment and "Allow GitHub Actions to create and
 # approve pull requests" enabled.
 
@@ -28,7 +34,7 @@ on:
 permissions:
   contents: write # push the version PR branch, create the tag + GitHub release
   pull-requests: write # open/update the "version packages" PR
-  id-token: write # PyPI OIDC trusted publishing + npm provenance attestation
+  id-token: write # npm provenance attestation
 
 concurrency:
   group: release
@@ -117,25 +123,5 @@ jobs:
           else
             gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
           fi
-
-      - name: Set up Python
-        if: steps.gate.outputs.publish == 'true'
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
-
-      - name: Build Python distributions
-        if: steps.gate.outputs.publish == 'true'
-        # Re-sync the version from the released npm package so the sdist/wheel carry it even if
-        # the version step's pyproject edit was not committed to the version PR. Idempotent.
-        run: |
-          node ts/scripts/sync-python-version.mjs
-          python -m pip install --upgrade build
-          python -m build py/packages/halo  --outdir dist-python
-          python -m build py/packages/claude --outdir dist-python
-
-      - name: Publish halo-format + halo-format-claude to PyPI
-        if: steps.gate.outputs.publish == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist-python
+          # The vX.Y.Z tag created above is what the per-package PyPI workflows key off of
+          # (via their own version<->tag gate) once this run completes.

@@ -1,0 +1,89 @@
+name: Publish halo-format (PyPI)
+
+# Publishes the `halo-format` PyPI package (py/packages/halo) at main's current version.
+#
+# Why this is its own file: a PyPI project allows exactly one trusted publisher per
+# (repository, workflow filename, environment). The two Halo PyPI projects therefore need two
+# distinct workflow files — `halo-format` here, `halo-format-claude` in publish-python-claude.yml.
+# They cannot be jobs in a shared workflow, and they cannot live in release.yml.
+#
+# Trigger: automatic, off the Release workflow. `workflow_run` is used (not `push`/`release`)
+# because Release creates the vX.Y.Z tag + GitHub release with GITHUB_TOKEN, and GitHub
+# suppresses the events from that token to prevent workflow loops. `workflow_run` fires anyway.
+# `workflow_dispatch` is kept as a manual escape hatch (e.g. to backfill a missed release).
+#
+# Idempotent: the gate only publishes when a vX.Y.Z tag matching pyproject's version exists
+# (i.e. Release actually cut a release), and `skip-existing: true` makes re-runs / already-
+# published versions a no-op rather than an error.
+#
+# Auth: OIDC trusted publishing — no stored token. Configure on the `halo-format` PyPI project:
+#   owner = halo-format, repo = halo, workflow = publish-python-halo.yml, environment = release.
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # PyPI OIDC trusted publishing
+
+concurrency:
+  group: publish-python-halo
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build + publish halo-format
+    # On workflow_run, only proceed when the Release run succeeded. Manual runs always proceed.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need tags for the version<->tag gate
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      # Keep pyproject's version in lockstep with the canonical npm version. The version PR
+      # already commits this, so it is normally a no-op; kept as a safety net (stdlib-only, no
+      # install needed). Then decide whether this version is actually a cut release.
+      - name: Decide whether to publish
+        id: gate
+        run: |
+          node ts/scripts/sync-python-version.mjs
+          VERSION="$(node -p "require('./ts/packages/halo/package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"; echo "Manual run — publishing v$VERSION."; exit 0
+          fi
+          if git ls-remote --tags origin "refs/tags/v$VERSION" | grep -q .; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"; echo "v$VERSION is tagged — publishing."
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"; echo "No v$VERSION tag (version PR only) — nothing to do."
+          fi
+
+      - name: Set up Python
+        if: steps.gate.outputs.publish == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build distribution
+        if: steps.gate.outputs.publish == 'true'
+        run: |
+          python -m pip install --upgrade build
+          python -m build py/packages/halo --outdir dist-python
+          echo "Built:" && ls dist-python
+
+      - name: Publish to PyPI
+        if: steps.gate.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-python
+          skip-existing: true
