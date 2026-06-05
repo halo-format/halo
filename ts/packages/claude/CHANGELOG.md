@@ -1,5 +1,13 @@
 # @halo-format/claude
 
+## 0.1.1
+
+### Patch Changes
+
+- 77094e7: Split PyPI publishing into two per-package workflows (`publish-python-halo.yml`, `publish-python-claude.yml`) so each PyPI project has its own trusted publisher. They trigger automatically off the Release workflow via `workflow_run`, matching the npm flow. No source changes; the four packages stay on one shared version.
+- Updated dependencies [77094e7]
+  - @halo-format/halo@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
