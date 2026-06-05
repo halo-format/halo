@@ -72,6 +72,31 @@ compare the with/without-Halo arms. On the raw API the runtime does not spill la
 tool results and the prefix is small, so Halo's context cut translates into real
 token/cost savings that **grow with payload size** (`PROFILE_ATTACHMENTS` tunes it).
 
+## Measured A/B (real API calls, `claude-sonnet-4-6`)
+
+Measured on this TS runtime against the raw API, alongside the Python port for
+reference. CLM-PROF auto-finalizes, so both arms run unattended:
+
+| `get_claim` | Lang | baseline $ | halo $ | **cost saving** |
+|-------------|------|-----------:|-------:|----------------:|
+| ~12 KB (8 attach.)  | TypeScript | $0.167 | $0.146 | **−12%** |
+| ~12 KB (8 attach.)  | Python | $0.210 | $0.189 | −10% |
+| **~54 KB (40 attach.)** | TypeScript | $0.275 | $0.139 | **−49%** |
+| ~54 KB (40 attach.) | Python | $0.392 | $0.206 | −48% |
+
+Two takeaways: (1) **Halo's win scales with payload size** — ~12% on a light claim,
+~49% on a heavy one — because the baseline re-sends the bulk in context every turn
+while the halo arm stays flat (it fetches only `lines`, never `attachment_bodies`).
+(2) **Language doesn't change the economics** — the saving percentage matches Python
+closely; baseline absolute numbers vary run-to-run only because the model takes a
+different number of turns (single-run variance, not a Python-vs-TS gap). Reproduce:
+
+```bash
+HALO=0 RUN_LABEL=raw_baseline npx tsx src/run-raw-api.ts CLM-PROF
+HALO=1 RUN_LABEL=raw_halo     npx tsx src/run-raw-api.ts CLM-PROF
+PROFILE_ATTACHMENTS=40 npx tsx db/seed.ts   # then re-run for the heavy-payload rows
+```
+
 ## Layout
 
 ```
