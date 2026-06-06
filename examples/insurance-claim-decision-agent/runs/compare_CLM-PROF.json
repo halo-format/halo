@@ -1,0 +1,34 @@
+{
+  "claim_id": "CLM-PROF",
+  "model": "claude-sonnet-4-6",
+  "runtime": "raw_messages_api",
+  "arms": {
+    "baseline": {
+      "total_tokens": 104617,
+      "cost_usd": 0.213767,
+      "turns": 10,
+      "halo_fetch_calls": 0,
+      "bytes_in_context_total": 11916,
+      "large_results": 1
+    },
+    "halo": {
+      "total_tokens": 90803,
+      "cost_usd": 0.187285,
+      "turns": 11,
+      "halo_fetch_calls": 1,
+      "bytes_in_context_total": 1051,
+      "encoded_results": 1,
+      "all_nodes_verified": true
+    }
+  },
+  "deltas": {
+    "tokens_saved": 13814,
+    "tokens_reduction_pct": 13.2,
+    "cost_saved_usd": 0.026482,
+    "cost_reduction_pct": 12.4,
+    "large_payload_bytes": 11916,
+    "bytes_in_context_baseline": 11916,
+    "bytes_in_context_halo": 1051,
+    "per_result_context_reduction_pct": 91.2
+  }
+}

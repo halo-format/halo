@@ -1,0 +1,1055 @@
+{
+  "meta": {
+    "runtime": "raw_messages_api",
+    "model": "claude-sonnet-4-6",
+    "claim_id": "CLM-PROF",
+    "halo_enabled": true,
+    "halo_threshold_bytes": 2048,
+    "adapter": "halo_format_claude.raw.create_raw_halo",
+    "alg": "sha256",
+    "system_prompt_chars": 5475,
+    "tool_count": 14
+  },
+  "turns": [
+    {
+      "index": 1,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 401,
+        "output_tokens": 131,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 3091
+      },
+      "assistant_text": [
+        "I'll adjudicate claim CLM-PROF end-to-end. Let me start by gathering all the foundational data in parallel.\n\n**Step 1 \u2014 Intake & Validate**"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_017F2gMNk4wGw1EeCtpYB1Zt",
+          "name": "payer_get_claim",
+          "input": {
+            "claim_id": "CLM-PROF"
+          }
+        },
+        {
+          "id": "toolu_01Tg7daVnn7NeCFNXCToecCj",
+          "name": "payer_get_agent_provenance",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1134,
+        "output_tokens": 111,
+        "cache_read_input_tokens": 3091,
+        "cache_creation_input_tokens": 0
+      },
+      "assistant_text": [
+        "Good. Now let me fetch the claim lines and simultaneously get member coverage:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_013XLVNpKNGt3hzb17LCM3FP",
+          "name": "halo_fetch",
+          "input": {
+            "refs": [
+              "CLM-PROF.lines",
+              "CLM-PROF.member_id",
+              "CLM-PROF.provider_id",
+              "CLM-PROF.diagnosis_codes"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1351,
+        "output_tokens": 153,
+        "cache_read_input_tokens": 3091,
+        "cache_creation_input_tokens": 444
+      },
+      "assistant_text": [
+        "Claim has 3 lines. Now fetch all supporting data in parallel:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01RMs3jkLg8NQENncrDNz7o8",
+          "name": "payer_get_member_coverage",
+          "input": {
+            "member_id": "MBR-PROF"
+          }
+        },
+        {
+          "id": "toolu_014riSrJNG9jNuDgZfVhmZoR",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLN-DENTAL-PROF"
+          }
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1102,
+        "output_tokens": 359,
+        "cache_read_input_tokens": 3589,
+        "cache_creation_input_tokens": 651
+      },
+      "assistant_text": [
+        "\u26a0\ufe0f Network check used wrong plan ID. Let me re-check with the correct plan ID and simultaneously get benefit rules, accumulators, and claim history:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01UuGBrQZZbWdscxJpEXKfEr",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLAN-DENTAL-PPO"
+          }
+        },
+        {
+          "id": "toolu_01HLsR6cxLXUjf4TLxReCSTq",
+          "name": "payer_get_benefit_rules",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D1110",
+              "D2391"
+            ]
+          }
+        },
+        {
+          "id": "toolu_01VYpYKEiihKpo4VbNDxkWag",
+          "name": "payer_get_accumulators",
+          "input": {
+            "member_id": "MBR-PROF",
+            "plan_year": 2026
+          }
+        },
+        {
+          "id": "toolu_01KkBgB8YyKvvZ5WW4s3jk5f",
+          "name": "payer_get_allowed_amount",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D1110",
+              "D2391"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1335,
+        "output_tokens": 298,
+        "cache_read_input_tokens": 4336,
+        "cache_creation_input_tokens": 566
+      },
+      "assistant_text": [
+        "Now let me run frequency/duplicate checks on all three procedure codes in parallel:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01DmnJxdNTnDg28GNWad8UXa",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D0120",
+            "window_days": 365
+          }
+        },
+        {
+          "id": "toolu_01HmEiUMp1QdAftsWPvdkdC1",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D1110",
+            "window_days": 365
+          }
+        },
+        {
+          "id": "toolu_01RH5cyHgQVCrhezUXFV2Y7t",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D2391",
+            "window_days": 365
+          }
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1762,
+        "output_tokens": 560,
+        "cache_read_input_tokens": 4959,
+        "cache_creation_input_tokens": 419
+      },
+      "assistant_text": [
+        "**Coverage & Rules Assessment:**\n\n| Line | Code | Category | Covered | Coverage% | Freq Limit | History | Network |\n|------|------|----------|---------|-----------|------------|---------|---------|\n| 1 | D0120 | Preventive | \u2705 | 100% | 2/year | 1 occurrence (this claim only) \u2705 | In-network \u2705 |\n| 2 | D1110 | Preventive | \u2705 | 100% | 2/year | 1 occurrence (this claim only) \u2705 | In-network \u2705 |\n| 3 | D2391 | Basic | \u2705 | 80% | None | 1 occurrence (this claim only) \u2705 | In-network \u2705 |\n\n- Member **MBR-PROF (Sam Profile)** is **active** since 2021-01-01, no term date.\n- Service date **2026-04-10** falls within coverage. \u2705\n- **Deductible fully met** ($5,000/$5,000). Annual max used: $0 of $150,000. \u2705\n- No preauth required on any line. No frequency violations. No duplicates.\n- D2391 is **basic** (80% coinsurance) \u2192 patient owes 20%.\n\n**Step 3 \u2014 Run the deterministic engine on all 3 lines in parallel:**"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_019PuJosAh1yuv3LZWMh6vuB",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-PROF",
+            "line_number": 1
+          }
+        },
+        {
+          "id": "toolu_01BpoYnojwKDBZgKkiTRyKUj",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-PROF",
+            "line_number": 2
+          }
+        },
+        {
+          "id": "toolu_01CCU8hYDY6cpyqkWoyiRhq1",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-PROF",
+            "line_number": 3
+          }
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2782,
+        "output_tokens": 76,
+        "cache_read_input_tokens": 5458,
+        "cache_creation_input_tokens": 795
+      },
+      "assistant_text": [
+        "Engine results are clean. Now verify the CARC code for line 3:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_011AgiZqx7Zynjuw17qjsH6D",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "2"
+          }
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1663,
+        "output_tokens": 1570,
+        "cache_read_input_tokens": 6350,
+        "cache_creation_input_tokens": 1134
+      },
+      "assistant_text": [
+        "All codes validated. **Step 4 \u2014 Record decisions:**"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_015x8Ht8aTZUsx71WYoKAFmq",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-PROF",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": "Preventive D0120 covered at 100%; in-network PRV-1001; deductible met; 1 of 2 annual frequency limit used; no preauth required.",
+                "evidence": {
+                  "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D1110",
+                "decision": "pay",
+                "allowed_cents": 12000,
+                "plan_paid_cents": 12000,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": "Preventive D1110 (prophylaxis) covered at 100%; in-network PRV-1001; deductible met; 1 of 2 annual frequency limit used; no preauth required.",
+                "evidence": {
+                  "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+                  "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2391",
+                "decision": "pay",
+                "allowed_cents": 18000,
+                "plan_paid_cents": 14400,
+                "patient_resp_cents": 3600,
+                "deductible_cents": 0,
+                "coinsurance_cents": 3600,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": "Basic D2391 (resin-based composite, 1-surface, posterior) covered at 80%; in-network PRV-1001; deductible met; 20% coinsurance ($36.00) applied to patient. No preauth required, no frequency limit.",
+                "evidence": {
+                  "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+                  "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1790,
+        "output_tokens": 1435,
+        "cache_read_input_tokens": 7559,
+        "cache_creation_input_tokens": 1493
+      },
+      "assistant_text": [
+        "`rule_basis` must be a list. Resubmitting:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01D1Qpkzt95g2ihuCcKzxzfW",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-PROF",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": [
+                  "Preventive D0120 covered at 100%",
+                  "in-network PRV-1001",
+                  "deductible met",
+                  "1 of 2 annual frequency limit used",
+                  "no preauth required"
+                ],
+                "evidence": {
+                  "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D1110",
+                "decision": "pay",
+                "allowed_cents": 12000,
+                "plan_paid_cents": 12000,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": [
+                  "Preventive D1110 prophylaxis covered at 100%",
+                  "in-network PRV-1001",
+                  "deductible met",
+                  "1 of 2 annual frequency limit used",
+                  "no preauth required"
+                ],
+                "evidence": {
+                  "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+                  "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2391",
+                "decision": "pay",
+                "allowed_cents": 18000,
+                "plan_paid_cents": 14400,
+                "patient_resp_cents": 3600,
+                "deductible_cents": 0,
+                "coinsurance_cents": 3600,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "Basic D2391 resin composite 1-surface posterior covered at 80%",
+                  "in-network PRV-1001",
+                  "deductible met",
+                  "20% coinsurance applied",
+                  "no preauth required",
+                  "no frequency limit"
+                ],
+                "evidence": {
+                  "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+                  "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 3211,
+        "output_tokens": 110,
+        "cache_read_input_tokens": 9111,
+        "cache_creation_input_tokens": 49
+      },
+      "assistant_text": [
+        "`requires_human: false` \u2014 all three lines are **pay** with no adverse outcomes. No human review gate needed. Proceeding directly to post.\n\n**Step 6 \u2014 Post adjudication:**"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01JPp4P8hGhtj9KLz8VQQ1J2",
+          "name": "payer_post_adjudication",
+          "input": {
+            "claim_id": "CLM-PROF"
+          }
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "stop_reason": "end_turn",
+      "usage": {
+        "input_tokens": 1801,
+        "output_tokens": 624,
+        "cache_read_input_tokens": 10581,
+        "cache_creation_input_tokens": 277
+      },
+      "assistant_text": [
+        "\u2705 **Claim CLM-PROF fully adjudicated and posted.**\n\n---\n\n## 835 / EOB \u2014 Explanation of Benefits\n\n**Member:** Sam Profile (MBR-PROF) \u00b7 **Plan:** Acme Dental PPO (PLAN-DENTAL-PPO) \u00b7 **Provider:** PRV-1001 (In-Network) \u00b7 **Date of Service:** 2026-04-10\n\n| Ln | Code | Description | Charged | Allowed | Plan Paid | Patient Resp | CARC | Decision |\n|----|------|-------------|--------:|--------:|----------:|-------------:|------|----------|\n| 1 | D0120 | Periodic Oral Exam | $65.00 | $65.00 | **$65.00** | $0.00 | \u2014 | \u2705 **PAY** |\n| 2 | D1110 | Prophylaxis (Adult) | $120.00 | $120.00 | **$120.00** | $0.00 | \u2014 | \u2705 **PAY** |\n| 3 | D2391 | Resin Composite 1-surf, Post. (Tooth 3-O) | $180.00 | $180.00 | **$144.00** | $36.00 | PR-2 (Coinsurance) | \u2705 **PAY** |\n| | **TOTAL** | | **$365.00** | **$365.00** | **$329.00** | **$36.00** | | |\n\n---\n\n### Per-Line Summary (one line each)\n\n| Ln | Decision | Rationale |\n|----|----------|-----------|\n| **1 \u2013 D0120** | \u2705 **PAY $65.00** | Preventive periodic exam, covered 100%, in-network, deductible met, within 2/year frequency limit \u2014 plan pays full $65.00, patient owes $0. |\n| **2 \u2013 D1110** | \u2705 **PAY $120.00** | Preventive adult prophylaxis, covered 100%, in-network, deductible met, within 2/year frequency limit \u2014 plan pays full $120.00, patient owes $0. |\n| **3 \u2013 D2391** | \u2705 **PAY $144.00** | Basic resin composite (Tooth 3, occlusal), covered at 80% coinsurance; in-network, deductible met, no preauth/frequency limit \u2014 plan pays $144.00, patient owes $36.00 (CARC PR-2). |"
+      ],
+      "tool_uses": []
+    }
+  ],
+  "tool_results": [
+    {
+      "turn": 1,
+      "tool": "payer_get_claim",
+      "args": {
+        "claim_id": "CLM-PROF"
+      },
+      "full_bytes": 11916,
+      "encoded": true,
+      "large": true,
+      "in_context_bytes": 1051,
+      "map_id": "CLM-PROF",
+      "shape_map_model_saw": "[halo] map \"CLM-PROF\" \u2014 object, 12 fields from payer_get_claim, stored out of context. Pull only the fields you need with ONE halo_fetch call \u2014 batch every ref into that one call; each call is a round trip. A [branch] ref expands to its sub-refs when fetched; every other ref returns its value.\nFields:\n  CLM-PROF.attachment_bodies  array[8]  [{\"attachment_ref\":\"ATT-1\",\"captured_at\":\"2026-01-17\",\"image_meta\":{\"bytes\":425\u2026\n  CLM-PROF.attachments  array[8]  [\"ATT-1\",\"ATT-2\",\"ATT-3\",\"ATT-4\",\"ATT-5\",\"ATT-6\",\"ATT-7\",\"ATT-8\"]\n  CLM-PROF.claim_number  string[7]  \"CN-PROF\"\n  CLM-PROF.date_received  string[10]  \"2026-06-01\"\n  CLM-PROF.diagnosis_codes  array[2]  [\"K02.9\",\"Z01.20\"]\n  CLM-PROF.id  string[8]  \"CLM-PROF\"\n  CLM-PROF.lines  array[3]  [{\"allowed_cents\":6500,\"carc\":\"[]\",\"charged_cents\":6500,\"claim_id\":\"CLM-PROF\",\"\u2026\n  CLM-PROF.member_id  string[8]  \"MBR-PROF\"\n  CLM-PROF.place_of_service  string[2]  \"11\"\n  CLM-PROF.provider_id  string[8]  \"PRV-1001\"\n  CLM-PROF.status  string[11]  \"adjudicated\"\n  CLM-PROF.total_charged_cents  number  = 36500",
+      "shape_map_bytes": 1051,
+      "reduction_pct": 91.2,
+      "bytes_kept_out_of_context": 10865,
+      "envelope": {
+        "halo": "1",
+        "alg": "sha256",
+        "root": "h:073d6edd712df5009edb3f7649b14c7f6ea2741a82a6d194c84e738e51ff04ef",
+        "source": {
+          "id": "CLM-PROF",
+          "tool": "payer_get_claim",
+          "args": {
+            "claim_id": "CLM-PROF"
+          },
+          "ts": "2026-06-06T14:43:27.565837+00:00"
+        },
+        "view": {
+          "summary": "12 branches: attachment_bodies, attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachment_bodies": "h:f0811c323bda8f6d03aff462fc010998adfd2936a0e9193ac952fa9ad959c44c",
+            "attachments": "h:f38cb44a30ece5cdefa54a14a8e16677aa2868cb6b0c7a59bd386ab086c8c0b7",
+            "claim_number": "h:468af4126202a71c9b2c5600281dc7e5b36739936d192ebf5bb47c8aaf43dcda",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:5f43a9f8b6df377b669722420392e448fde58e0757630b53081d86c0b86f6ebc",
+            "id": "h:1db709fd9ac321c7e0dd89a34bc9389338206218e2be21e9be22ff55c8f94b96",
+            "lines": "h:df794649b8181886ebf7683afbe76c5d6f60b1f0c5eda97035bfe733730e430c",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:38a83c28a8c824452e8c31a488bd8fe072c30a5ffde88dbd8f8b671c0a3027ae",
+            "total_charged_cents": "h:f4db1ec55a10f1decfa8845f322bdc0ff13f2c31d4bef2f15a90167ad63acabe"
+          }
+        }
+      },
+      "nodes": [
+        {
+          "handle": "h:073d6edd712df5009edb3f7649b14c7f6ea2741a82a6d194c84e738e51ff04ef",
+          "depth": 0,
+          "stored_bytes": 1206,
+          "verified": true,
+          "kind": "branch",
+          "summary": "12 branches: attachment_bodies, attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachment_bodies": "h:f0811c323bda8f6d03aff462fc010998adfd2936a0e9193ac952fa9ad959c44c",
+            "attachments": "h:f38cb44a30ece5cdefa54a14a8e16677aa2868cb6b0c7a59bd386ab086c8c0b7",
+            "claim_number": "h:468af4126202a71c9b2c5600281dc7e5b36739936d192ebf5bb47c8aaf43dcda",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:5f43a9f8b6df377b669722420392e448fde58e0757630b53081d86c0b86f6ebc",
+            "id": "h:1db709fd9ac321c7e0dd89a34bc9389338206218e2be21e9be22ff55c8f94b96",
+            "lines": "h:df794649b8181886ebf7683afbe76c5d6f60b1f0c5eda97035bfe733730e430c",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:38a83c28a8c824452e8c31a488bd8fe072c30a5ffde88dbd8f8b671c0a3027ae",
+            "total_charged_cents": "h:f4db1ec55a10f1decfa8845f322bdc0ff13f2c31d4bef2f15a90167ad63acabe"
+          }
+        },
+        {
+          "handle": "h:f0811c323bda8f6d03aff462fc010998adfd2936a0e9193ac952fa9ad959c44c",
+          "depth": 1,
+          "stored_bytes": 9893,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10514,
+          "value_preview": "[{\"attachment_ref\": \"ATT-1\", \"captured_at\": \"2026-01-17\", \"image_meta\": {\"bytes\": 425989, \"dpi\": 300, \"modality\": \"intraoral\"}, \"kind\": \"clinical_note\", \"narrative\": \"Patient presents for evaluation. Intraoral examination performed; findin\u2026"
+        },
+        {
+          "handle": "h:f38cb44a30ece5cdefa54a14a8e16677aa2868cb6b0c7a59bd386ab086c8c0b7",
+          "depth": 1,
+          "stored_bytes": 83,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 72,
+          "value_preview": "[\"ATT-1\", \"ATT-2\", \"ATT-3\", \"ATT-4\", \"ATT-5\", \"ATT-6\", \"ATT-7\", \"ATT-8\"]"
+        },
+        {
+          "handle": "h:468af4126202a71c9b2c5600281dc7e5b36739936d192ebf5bb47c8aaf43dcda",
+          "depth": 1,
+          "stored_bytes": 27,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 9,
+          "value_preview": "CN-PROF"
+        },
+        {
+          "handle": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+          "depth": 1,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-06-01"
+        },
+        {
+          "handle": "h:5f43a9f8b6df377b669722420392e448fde58e0757630b53081d86c0b86f6ebc",
+          "depth": 1,
+          "stored_bytes": 36,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 19,
+          "value_preview": "[\"K02.9\", \"Z01.20\"]"
+        },
+        {
+          "handle": "h:1db709fd9ac321c7e0dd89a34bc9389338206218e2be21e9be22ff55c8f94b96",
+          "depth": 1,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "CLM-PROF"
+        },
+        {
+          "handle": "h:df794649b8181886ebf7683afbe76c5d6f60b1f0c5eda97035bfe733730e430c",
+          "depth": 1,
+          "stored_bytes": 953,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 1030,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-PROF\", \"date_of_service\": \"2026-04-10\", \"id\": \"CLP-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_co\u2026"
+        },
+        {
+          "handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "depth": 1,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF"
+        },
+        {
+          "handle": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+          "depth": 1,
+          "stored_bytes": 22,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 4,
+          "value_preview": "11"
+        },
+        {
+          "handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "depth": 1,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001"
+        },
+        {
+          "handle": "h:38a83c28a8c824452e8c31a488bd8fe072c30a5ffde88dbd8f8b671c0a3027ae",
+          "depth": 1,
+          "stored_bytes": 31,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 13,
+          "value_preview": "adjudicated"
+        },
+        {
+          "handle": "h:f4db1ec55a10f1decfa8845f322bdc0ff13f2c31d4bef2f15a90167ad63acabe",
+          "depth": 1,
+          "stored_bytes": 23,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 5,
+          "value_preview": "36500"
+        }
+      ],
+      "node_count": 13,
+      "all_nodes_verified": true,
+      "store_bytes_total": 12388
+    },
+    {
+      "turn": 1,
+      "tool": "payer_get_agent_provenance",
+      "args": {},
+      "full_bytes": 208,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 208
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_member_coverage",
+      "args": {
+        "member_id": "MBR-PROF"
+      },
+      "full_bytes": 446,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 446
+    },
+    {
+      "turn": 3,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLN-DENTAL-PROF"
+      },
+      "full_bytes": 96,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 96
+    },
+    {
+      "turn": 4,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLAN-DENTAL-PPO"
+      },
+      "full_bytes": 94,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 94
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_benefit_rules",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D1110",
+          "D2391"
+        ]
+      },
+      "full_bytes": 685,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 685
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_accumulators",
+      "args": {
+        "member_id": "MBR-PROF",
+        "plan_year": 2026
+      },
+      "full_bytes": 125,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 125
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_allowed_amount",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D1110",
+          "D2391"
+        ]
+      },
+      "full_bytes": 90,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 90
+    },
+    {
+      "turn": 5,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D0120",
+        "window_days": 365
+      },
+      "full_bytes": 388,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 388
+    },
+    {
+      "turn": 5,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D1110",
+        "window_days": 365
+      },
+      "full_bytes": 391,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 391
+    },
+    {
+      "turn": 5,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D2391",
+        "window_days": 365
+      },
+      "full_bytes": 420,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 420
+    },
+    {
+      "turn": 6,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-PROF",
+        "line_number": 1
+      },
+      "full_bytes": 864,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 864
+    },
+    {
+      "turn": 6,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-PROF",
+        "line_number": 2
+      },
+      "full_bytes": 866,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 866
+    },
+    {
+      "turn": 6,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-PROF",
+        "line_number": 3
+      },
+      "full_bytes": 900,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 900
+    },
+    {
+      "turn": 7,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "2"
+      },
+      "full_bytes": 66,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 66
+    },
+    {
+      "turn": 9,
+      "tool": "payer_record_decision",
+      "args": {
+        "claim_id": "CLM-PROF",
+        "model_version": "claude-sonnet-4-6",
+        "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+        "lines": [
+          {
+            "line_number": 1,
+            "procedure_code": "D0120",
+            "decision": "pay",
+            "allowed_cents": 6500,
+            "plan_paid_cents": 6500,
+            "patient_resp_cents": 0,
+            "deductible_cents": 0,
+            "coinsurance_cents": 0,
+            "carc": [],
+            "rarc": [],
+            "rule_basis": [
+              "Preventive D0120 covered at 100%",
+              "in-network PRV-1001",
+              "deductible met",
+              "1 of 2 annual frequency limit used",
+              "no preauth required"
+            ],
+            "evidence": {
+              "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+              "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 2,
+            "procedure_code": "D1110",
+            "decision": "pay",
+            "allowed_cents": 12000,
+            "plan_paid_cents": 12000,
+            "patient_resp_cents": 0,
+            "deductible_cents": 0,
+            "coinsurance_cents": 0,
+            "carc": [],
+            "rarc": [],
+            "rule_basis": [
+              "Preventive D1110 prophylaxis covered at 100%",
+              "in-network PRV-1001",
+              "deductible met",
+              "1 of 2 annual frequency limit used",
+              "no preauth required"
+            ],
+            "evidence": {
+              "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+              "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 3,
+            "procedure_code": "D2391",
+            "decision": "pay",
+            "allowed_cents": 18000,
+            "plan_paid_cents": 14400,
+            "patient_resp_cents": 3600,
+            "deductible_cents": 0,
+            "coinsurance_cents": 3600,
+            "carc": [
+              {
+                "code": "2",
+                "group": "PR"
+              }
+            ],
+            "rarc": [],
+            "rule_basis": [
+              "Basic D2391 resin composite 1-surface posterior covered at 80%",
+              "in-network PRV-1001",
+              "deductible met",
+              "20% coinsurance applied",
+              "no preauth required",
+              "no frequency limit"
+            ],
+            "evidence": {
+              "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+              "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          }
+        ]
+      },
+      "full_bytes": 220,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 220
+    },
+    {
+      "turn": 10,
+      "tool": "payer_post_adjudication",
+      "args": {
+        "claim_id": "CLM-PROF"
+      },
+      "full_bytes": 420,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 420
+    }
+  ],
+  "fetches": [
+    {
+      "turn": 2,
+      "refs": [
+        "CLM-PROF.lines",
+        "CLM-PROF.member_id",
+        "CLM-PROF.provider_id",
+        "CLM-PROF.diagnosis_codes"
+      ],
+      "results": [
+        {
+          "ref": "CLM-PROF.lines",
+          "resolved_handle": "h:df794649b8181886ebf7683afbe76c5d6f60b1f0c5eda97035bfe733730e430c",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 1030,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-PROF\", \"date_of_service\": \"2026-04-10\", \"id\": \"CLP-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_co\u2026",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-PROF.member_id",
+          "resolved_handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-PROF.provider_id",
+          "resolved_handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-PROF.diagnosis_codes",
+          "resolved_handle": "h:5f43a9f8b6df377b669722420392e448fde58e0757630b53081d86c0b86f6ebc",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 19,
+          "value_preview": "[\"K02.9\", \"Z01.20\"]",
+          "reverified": true
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "label": "raw_halo_CLM-PROF",
+    "halo_enabled": true,
+    "tokens": {
+      "input_tokens": 18332,
+      "output_tokens": 5427,
+      "cache_read_input_tokens": 58125,
+      "cache_creation_input_tokens": 8919
+    },
+    "total_tokens": 90803,
+    "estimated_cost_usd": 0.187285,
+    "turns": 11,
+    "tool_calls": {
+      "payer_get_claim": 1,
+      "payer_get_agent_provenance": 1,
+      "halo_fetch": 1,
+      "payer_get_member_coverage": 1,
+      "payer_check_network": 2,
+      "payer_get_benefit_rules": 1,
+      "payer_get_accumulators": 1,
+      "payer_get_allowed_amount": 1,
+      "payer_get_claim_history": 3,
+      "payer_adjudicate_line": 3,
+      "payer_lookup_reason_code": 1,
+      "payer_record_decision": 2,
+      "payer_post_adjudication": 1
+    },
+    "halo_fetch_calls": 1,
+    "halo_maps": 1,
+    "encoded_results": 1,
+    "large_results": 1,
+    "bytes_full_total": 11916,
+    "bytes_in_context_total": 1051,
+    "bytes_kept_out_of_context": 10865,
+    "context_reduction_pct": 91.2
+  }
+}
