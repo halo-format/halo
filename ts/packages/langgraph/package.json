@@ -1,0 +1,59 @@
+{
+  "name": "@halo-format/langgraph",
+  "version": "0.1.1",
+  "description": "Halo host adapter for LangChain agents and LangGraph graphs: a wrapToolCall encode middleware (results become a shape map, out of context) plus a single halo_fetch navigation tool. installHalo() wires it in one call.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@halo-format/halo": "workspace:*",
+    "zod": "^3.25.0"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=1.0.0",
+    "langchain": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/langgraph": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@langchain/core": "^1.0.0",
+    "@langchain/langgraph": "^1.0.0",
+    "langchain": "^1.0.0",
+    "vitest": "^1.5.0"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "halo",
+    "langchain",
+    "langgraph",
+    "middleware",
+    "ai-agents",
+    "tool-results"
+  ],
+  "homepage": "https://github.com/halo-format/halo/tree/main/ts/packages/langgraph#readme",
+  "bugs": "https://github.com/halo-format/halo/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/halo-format/halo.git",
+    "directory": "ts/packages/langgraph"
+  }
+}

@@ -53,7 +53,7 @@ jobs:
           cache: pip
 
       - name: Install packages + test deps
-        run: pip install -e py/packages/halo -e py/packages/claude pytest
+        run: pip install -e py/packages/halo -e py/packages/claude -e py/packages/langgraph pytest
 
       - name: Run tests + conformance vectors
         run: pytest py
