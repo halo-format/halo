@@ -7,8 +7,8 @@
     "halo_threshold_bytes": 2048,
     "adapter": null,
     "alg": "sha256",
-    "system_prompt_chars": 4633,
-    "tool_count": 13
+    "system_prompt_chars": 5509,
+    "tool_count": 15
   },
   "turns": [
     {
@@ -16,23 +16,23 @@
       "stop_reason": "tool_use",
       "usage": {
         "input_tokens": 400,
-        "output_tokens": 131,
-        "cache_read_input_tokens": 0,
-        "cache_creation_input_tokens": 2654
+        "output_tokens": 129,
+        "cache_read_input_tokens": 3092,
+        "cache_creation_input_tokens": 0
       },
       "assistant_text": [
-        "I'll adjudicate claim CLM-PROF end-to-end. Let me start by gathering all the foundational data in parallel.\n\n**Step 1 \u2014 Intake & Validate**"
+        "I'll adjudicate claim CLM-PROF end to end. Let me start by gathering all the foundational data in parallel.\n\n**Step 1 \u2014 Intake & Validate**"
       ],
       "tool_uses": [
         {
-          "id": "toolu_013u5gsjYreKmaFYd4oMvKoV",
+          "id": "toolu_01KhXNF94uZjXhRnaR2qwBrq",
           "name": "payer_get_claim",
           "input": {
             "claim_id": "CLM-PROF"
           }
         },
         {
-          "id": "toolu_01NahvscvXaaNQFPit3UoBN2",
+          "id": "toolu_012RsmEyo16Sancp8KfoQ1Kn",
           "name": "payer_get_agent_provenance",
           "input": {}
         }
@@ -42,28 +42,28 @@
       "index": 2,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 3837,
+        "input_tokens": 1205,
         "output_tokens": 175,
-        "cache_read_input_tokens": 2654,
-        "cache_creation_input_tokens": 443
+        "cache_read_input_tokens": 3092,
+        "cache_creation_input_tokens": 441
       },
       "assistant_text": [
-        "Good \u2014 claim received. 3 lines, member MBR-PROF, provider PRV-1001. Now let me pull member coverage and check provider network simultaneously."
+        "Good. Claim received, 3 lines, member **MBR-PROF**, provider **PRV-1001**. Now let me pull member coverage and check network status simultaneously."
       ],
       "tool_uses": [
         {
-          "id": "toolu_019BofJCUnDWPb2i7XR3Pc9c",
+          "id": "toolu_01JhApPpxRmz3wj4McGe6wYW",
           "name": "payer_get_member_coverage",
           "input": {
             "member_id": "MBR-PROF"
           }
         },
         {
-          "id": "toolu_01617VCdikAWrCimytrck2Ps",
+          "id": "toolu_01PLbrxBeMyWLfcLyvt6Jw53",
           "name": "payer_check_network",
           "input": {
             "provider_id": "PRV-1001",
-            "plan_id": "PLN-DENTAL-PREM"
+            "plan_id": "PLAN-PROF"
           }
         }
       ]
@@ -72,17 +72,17 @@
       "index": 3,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 4316,
+        "input_tokens": 1680,
         "output_tokens": 373,
-        "cache_read_input_tokens": 2654,
-        "cache_creation_input_tokens": 443
+        "cache_read_input_tokens": 3092,
+        "cache_creation_input_tokens": 441
       },
       "assistant_text": [
-        "The plan ID is `PLAN-DENTAL-PPO` \u2014 let me re-check network with the correct plan ID, and in parallel pull benefit rules, allowed amounts, accumulators, and claim history for all three procedure codes."
+        "\u26a0\ufe0f Important: Network check returned out-of-network using the wrong plan ID. Let me re-check with the correct plan ID from the member record, and simultaneously pull benefit rules, allowed amounts, and accumulators."
       ],
       "tool_uses": [
         {
-          "id": "toolu_014hafUhrF1YR8NjohqdcpoL",
+          "id": "toolu_014nKezzgBeGmUyHN4i5mpWx",
           "name": "payer_check_network",
           "input": {
             "provider_id": "PRV-1001",
@@ -90,7 +90,7 @@
           }
         },
         {
-          "id": "toolu_01KP4mJoqEyHun1uYw8uqq1A",
+          "id": "toolu_01NCaUW6FoWLR5gNPXjzW2AQ",
           "name": "payer_get_benefit_rules",
           "input": {
             "plan_id": "PLAN-DENTAL-PPO",
@@ -102,7 +102,7 @@
           }
         },
         {
-          "id": "toolu_01DCnaUzFveGFchFqd7gd99m",
+          "id": "toolu_01KYqK5J2zGL51R6ahiN5rGn",
           "name": "payer_get_allowed_amount",
           "input": {
             "plan_id": "PLAN-DENTAL-PPO",
@@ -114,7 +114,7 @@
           }
         },
         {
-          "id": "toolu_01Un4648bHeYRjKVsXt8fSiM",
+          "id": "toolu_01EBdnncxzG8eHYFtM5GWjen",
           "name": "payer_get_accumulators",
           "input": {
             "member_id": "MBR-PROF",
@@ -127,17 +127,17 @@
       "index": 4,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 1351,
-        "output_tokens": 302,
-        "cache_read_input_tokens": 3151,
-        "cache_creation_input_tokens": 3820
+        "input_tokens": 1343,
+        "output_tokens": 334,
+        "cache_read_input_tokens": 3587,
+        "cache_creation_input_tokens": 1192
       },
       "assistant_text": [
-        "Excellent. Now let me pull claim history for all three codes to check frequency and duplicates."
+        "\u2705 Provider is **in-network**. Deductible fully met ($50). Now check claim history for frequency-sensitive codes (D0120, D1110 are 2/year), and pull the clinical attachment for Line 3 (D2391 \u2014 resin-based composite, posterior, major restorative)."
       ],
       "tool_uses": [
         {
-          "id": "toolu_016K766QfgNzsPHufoUJZWfg",
+          "id": "toolu_018HwtecFhD5fpVVrV2721Wp",
           "name": "payer_get_claim_history",
           "input": {
             "member_id": "MBR-PROF",
@@ -146,7 +146,7 @@
           }
         },
         {
-          "id": "toolu_01YagwoAzwKVuvjVc2TzPgxp",
+          "id": "toolu_01XXZ474jfhnLvJyCouuSSDn",
           "name": "payer_get_claim_history",
           "input": {
             "member_id": "MBR-PROF",
@@ -155,12 +155,11 @@
           }
         },
         {
-          "id": "toolu_019ohU6HaqkxjN7JNvhUN8v3",
-          "name": "payer_get_claim_history",
+          "id": "toolu_01CtjpgcpUzjhdvWTstJgB4Z",
+          "name": "payer_get_attachment",
           "input": {
-            "member_id": "MBR-PROF",
-            "procedure_code": "D2391",
-            "window_days": 365
+            "claim_id": "CLM-PROF",
+            "attachment_ref": "ATT-3"
           }
         }
       ]
@@ -169,17 +168,17 @@
       "index": 5,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 1766,
-        "output_tokens": 443,
-        "cache_read_input_tokens": 7028,
-        "cache_creation_input_tokens": 435
+        "input_tokens": 40817,
+        "output_tokens": 510,
+        "cache_read_input_tokens": 4836,
+        "cache_creation_input_tokens": 427
       },
       "assistant_text": [
-        "**Coverage & Rules Assessment:**\n- \u2705 Member MBR-PROF (Sam Profile) is **active**, coverage effective 2021-01-01, no term date\n- \u2705 Service dates (2026-04-10) fall within coverage\n- \u2705 Provider PRV-1001 is **in-network** on PLAN-DENTAL-PPO\n- \u2705 Deductible fully met ($50.00 met of $50.00)\n- \u2705 Annual max: $0 used of $1,500 \u2014 well within limits\n- \u2705 No preauth required on any code\n- \u2705 No waiting periods\n- \u2705 **Frequency check:** History for D0120 and D1110 shows only this claim's own lines (no prior paid events this year) \u2014 within 2/year limit\n- \u2705 No duplicate lines detected\n\n**Step 3 \u2014 Adjudicate all three lines in parallel:**"
+        "Good findings. Key notes from the coverage/rules review:\n\n- **Line 1 (D0120)**: Frequency limit 2/year. History shows a **prior paid claim (CLM-BIG, DOS 2026-05-18) for D0120** \u2014 but that date is *after* the current DOS (2026-04-10), suggesting the current claim was submitted first in date of service. Only 1 prior paid claim exists within 365 days = within frequency. \u2705 Clear.\n- **Line 2 (D1110)**: No prior paid history; only the pending current claim. \u2705 Clear.\n- **Line 3 (D2391)**: ATT-3 (periapical X-ray, 2026-05-10): *Findings* confirm \"Radiograph supports the proposed restoration; margins intact, no periapical pathology.\" Tooth 3 is charted as \"restored.\" Documentation supports the procedure. \u2705 Clear.\n\nNow I'll look up the relevant reason code for Line 1 (since a prior D0120 was already paid in the same plan year, even though at a later date, the frequency check is tied to the calendar year count, not sequence), and proceed to run the engine on all 3 lines in parallel."
       ],
       "tool_uses": [
         {
-          "id": "toolu_01QfeCfuC61tMyWabHjuArP2",
+          "id": "toolu_016Gky5ShDgRJXtqZWheFpWx",
           "name": "payer_adjudicate_line",
           "input": {
             "claim_id": "CLM-PROF",
@@ -187,7 +186,7 @@
           }
         },
         {
-          "id": "toolu_01WbL4kykt1JiU696mJTWpV8",
+          "id": "toolu_01TCJ6nXMmRMksogWGoxcX9m",
           "name": "payer_adjudicate_line",
           "input": {
             "claim_id": "CLM-PROF",
@@ -195,7 +194,7 @@
           }
         },
         {
-          "id": "toolu_016VRz39kq7KbcKSLRmxnnME",
+          "id": "toolu_01Y7BGgPcQHBAjxeEhSXJUXr",
           "name": "payer_adjudicate_line",
           "input": {
             "claim_id": "CLM-PROF",
@@ -208,17 +207,17 @@
       "index": 6,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 2665,
-        "output_tokens": 90,
-        "cache_read_input_tokens": 7543,
-        "cache_creation_input_tokens": 799
+        "input_tokens": 41731,
+        "output_tokens": 94,
+        "cache_read_input_tokens": 5343,
+        "cache_creation_input_tokens": 852
       },
       "assistant_text": [
-        "Engine results are clean. Line 3 carries CARC 2 \u2014 let me confirm it from the reference set, then record all decisions."
+        "Engine results are clean. Now let me verify the CARC code for Line 3 (CARC 2 = standard coinsurance) before recording."
       ],
       "tool_uses": [
         {
-          "id": "toolu_01KihVxkz7vCi38Jofz52W1b",
+          "id": "toolu_017DPpthEGdHhLgHXV5RMokt",
           "name": "payer_lookup_reason_code",
           "input": {
             "code": "2"
@@ -230,22 +229,22 @@
       "index": 7,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 1677,
-        "output_tokens": 1637,
-        "cache_read_input_tokens": 8439,
-        "cache_creation_input_tokens": 1017
+        "input_tokens": 1682,
+        "output_tokens": 1651,
+        "cache_read_input_tokens": 6292,
+        "cache_creation_input_tokens": 40082
       },
       "assistant_text": [
-        "CARC 2 confirmed (\"Coinsurance amount\" \u2014 patient responsibility). All three lines have `review_required: false`, and decisions are:\n- Line 1: **PAY** \u2014 preventive, 100% covered, no patient responsibility\n- Line 2: **PAY** \u2014 preventive, 100% covered, no patient responsibility\n- Line 3: **PAY** (with normal coinsurance) \u2014 basic service, 80% plan / 20% patient per benefit design\n\n**Step 4 \u2014 Record decisions:**"
+        "CARC 2 confirmed: \"Coinsurance amount.\" All three lines are clean \u2014 no denials, no pends, no out-of-network reductions. Now I'll record all decisions in one call.\n\n**Step 4 \u2014 Record Decisions**"
       ],
       "tool_uses": [
         {
-          "id": "toolu_018RKq79627YFXmHvkgN4oLd",
+          "id": "toolu_01WJipQ1rguuEcCHfzUoTCDg",
           "name": "payer_record_decision",
           "input": {
             "claim_id": "CLM-PROF",
             "model_version": "claude-sonnet-4-6",
-            "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
             "lines": [
               {
                 "line_number": 1,
@@ -258,9 +257,9 @@
                 "coinsurance_cents": 0,
                 "carc": [],
                 "rarc": [],
-                "rule_basis": "BR-D0120: preventive, 100% covered, in-network, deductible met, within 2/year frequency, no preauth required",
+                "rule_basis": "Preventive exam (D0120); covered 100%, in-network, deductible met, 1 of 2 allowed per year (prior paid claim CLM-BIG DOS 2026-05-18 counted as 2nd occurrence in year; current DOS 2026-04-10 is 1st). No frequency breach.",
                 "evidence": {
-                  "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+                  "line": "h:68c0372a60dcc36c28ac3fd6a60c795a79430c52a047ed2904f680e4f569f1f7",
                   "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
@@ -279,9 +278,9 @@
                 "coinsurance_cents": 0,
                 "carc": [],
                 "rarc": [],
-                "rule_basis": "BR-D1110: preventive, 100% covered, in-network, deductible met, within 2/year frequency, no preauth required",
+                "rule_basis": "Prophylaxis (D1110); covered 100%, in-network, deductible met, no prior paid history within 365 days. Frequency limit not breached.",
                 "evidence": {
-                  "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+                  "line": "h:9d459ab629cc7f8ba295c0bb80fec418b6d6ca360841599fffb4d39e44823396",
                   "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
@@ -305,9 +304,9 @@
                   }
                 ],
                 "rarc": [],
-                "rule_basis": "BR-D2391: basic restorative, 80% covered, in-network, deductible met; 20% coinsurance ($36.00) applied to patient per plan design",
+                "rule_basis": "Basic restoration D2391 Tooth #3-O; covered 80%, in-network, deductible met. 20% coinsurance applies ($36.00). Clinical attachment ATT-3 reviewed: periapical X-ray findings confirm restoration supported, tooth charted as restored. No preauth required.",
                 "evidence": {
-                  "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+                  "line": "h:e28b553eff1d6f7ec5fc8d7a40c6963fb6d054366843df352851b83baea6dd31",
                   "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
@@ -324,22 +323,22 @@
       "index": 8,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 1857,
-        "output_tokens": 1428,
-        "cache_read_input_tokens": 9531,
-        "cache_creation_input_tokens": 1507
+        "input_tokens": 1868,
+        "output_tokens": 1544,
+        "cache_read_input_tokens": 46449,
+        "cache_creation_input_tokens": 1512
       },
       "assistant_text": [
-        "`rule_basis` must be a list. Resubmitting with array format:"
+        "`rule_basis` must be a list. Reformatting and re-submitting."
       ],
       "tool_uses": [
         {
-          "id": "toolu_01AoyFNR85LSWm3WYru2QQhZ",
+          "id": "toolu_01NB3ZDwHCthWTKtkttWCybz",
           "name": "payer_record_decision",
           "input": {
             "claim_id": "CLM-PROF",
             "model_version": "claude-sonnet-4-6",
-            "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
             "lines": [
               {
                 "line_number": 1,
@@ -353,15 +352,13 @@
                 "carc": [],
                 "rarc": [],
                 "rule_basis": [
-                  "BR-D0120",
-                  "preventive 100%",
-                  "in-network PRV-1001",
-                  "deductible met",
-                  "frequency 1/2 per year",
-                  "no preauth required"
+                  "Preventive exam D0120; covered 100% in-network",
+                  "Deductible met; no coinsurance",
+                  "Frequency 2/year: current DOS 2026-04-10 is 1st occurrence; prior paid CLM-BIG DOS 2026-05-18 is 2nd \u2014 no breach at time of service",
+                  "No preauth required; clean claim"
                 ],
                 "evidence": {
-                  "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+                  "line": "h:68c0372a60dcc36c28ac3fd6a60c795a79430c52a047ed2904f680e4f569f1f7",
                   "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
@@ -381,15 +378,13 @@
                 "carc": [],
                 "rarc": [],
                 "rule_basis": [
-                  "BR-D1110",
-                  "preventive 100%",
-                  "in-network PRV-1001",
-                  "deductible met",
-                  "frequency 1/2 per year",
-                  "no preauth required"
+                  "Prophylaxis D1110; covered 100% in-network",
+                  "Deductible met; no coinsurance",
+                  "Frequency 2/year: no prior paid history in 365-day window \u2014 not breached",
+                  "No preauth required; clean claim"
                 ],
                 "evidence": {
-                  "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+                  "line": "h:9d459ab629cc7f8ba295c0bb80fec418b6d6ca360841599fffb4d39e44823396",
                   "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
@@ -414,16 +409,14 @@
                 ],
                 "rarc": [],
                 "rule_basis": [
-                  "BR-D2391",
-                  "basic restorative 80%",
-                  "in-network PRV-1001",
-                  "deductible met",
-                  "20% coinsurance patient responsibility",
-                  "no frequency limit",
-                  "no preauth required"
+                  "Basic restoration D2391 Tooth #3 surface O; covered 80% in-network",
+                  "Deductible met; 20% coinsurance = $36.00 patient responsibility (CARC 2 PR)",
+                  "ATT-3 periapical X-ray findings: radiograph supports restoration, margins intact, no periapical pathology",
+                  "Tooth #3 charted as restored; documentation adequate",
+                  "No preauth required; no frequency limit"
                 ],
                 "evidence": {
-                  "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+                  "line": "h:e28b553eff1d6f7ec5fc8d7a40c6963fb6d054366843df352851b83baea6dd31",
                   "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
                   "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
                   "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
@@ -440,17 +433,17 @@
       "index": 9,
       "stop_reason": "tool_use",
       "usage": {
-        "input_tokens": 3164,
-        "output_tokens": 116,
-        "cache_read_input_tokens": 11097,
-        "cache_creation_input_tokens": 156
+        "input_tokens": 3360,
+        "output_tokens": 110,
+        "cache_read_input_tokens": 48020,
+        "cache_creation_input_tokens": 95
       },
       "assistant_text": [
-        "`requires_human: false` \u2014 all three lines are straight-pay with no adverse outcomes. No human review gate needed. Proceeding directly to post.\n\n**Step 6 \u2014 Post adjudication to 835/EOB:**"
+        "`requires_human: false` \u2014 all three lines are standard pays with no adverse outcomes. No human review gate needed. Proceeding directly to post.\n\n**Step 6 \u2014 Post Adjudication**"
       ],
       "tool_uses": [
         {
-          "id": "toolu_01HS3GSZrDDG9fd3RkmA11Y6",
+          "id": "toolu_012jDGYsN5qALNNtk1kpKaXC",
           "name": "payer_post_adjudication",
           "input": {
             "claim_id": "CLM-PROF"
@@ -462,13 +455,13 @@
       "index": 10,
       "stop_reason": "end_turn",
       "usage": {
-        "input_tokens": 1797,
-        "output_tokens": 807,
-        "cache_read_input_tokens": 12634,
-        "cache_creation_input_tokens": 280
+        "input_tokens": 1914,
+        "output_tokens": 658,
+        "cache_read_input_tokens": 49571,
+        "cache_creation_input_tokens": 278
       },
       "assistant_text": [
-        "\u2705 **Claim CLM-PROF fully adjudicated and posted.** All 3 lines committed to `ext.claim_lines`.\n\n---\n\n## EOB-Style Summary \u2014 CLM-PROF (Sam Profile | MBR-PROF | PLAN-DENTAL-PPO | DOS 2026-04-10)\n\n| Ln | Code | Description | Charged | Allowed | Plan Paid | Patient Resp | Decision | CARC | Rule Basis |\n|----|------|-------------|--------:|--------:|----------:|-------------:|----------|------|------------|\n| 1 | D0120 | Periodic Oral Eval | $65.00 | $65.00 | **$65.00** | $0.00 | \u2705 **PAY** | \u2014 | BR-D0120: Preventive, 100% covered; in-network; deductible met; 1st of 2 allowed/yr |\n| 2 | D1110 | Adult Prophylaxis | $120.00 | $120.00 | **$120.00** | $0.00 | \u2705 **PAY** | \u2014 | BR-D1110: Preventive, 100% covered; in-network; deductible met; 1st of 2 allowed/yr |\n| 3 | D2391 | Composite 1-surf, posterior | $180.00 | $180.00 | **$144.00** | $36.00 | \u2705 **PAY** | CARC 2 (PR) | BR-D2391: Basic restorative, 80% plan / 20% patient coinsurance; in-network; deductible met |\n| | | **Totals** | **$365.00** | **$365.00** | **$329.00** | **$36.00** | | | |\n\n**Key facts applied:**\n- \ud83e\uddb7 **Provider PRV-1001** is **in-network** on PLAN-DENTAL-PPO \u2014 full PPO fee schedule applied.\n- \ud83d\udcb0 **Deductible** fully met ($50/$50) entering this claim; zero deductible applied to any line.\n- \ud83d\udcc5 **Annual maximum**: $329.00 used of $1,500.00 \u2014 no annual max impact.\n- \ud83d\udccb **No preauth** required for any code; **no frequency violations** detected; **no duplicates**.\n- \ud83d\udd12 **No adverse outcomes** \u2014 human review gate was not triggered; auto-finalized per policy.\n- \ud83d\udd11 **Prompt version:** `sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4` | **Model:** `claude-sonnet-4-6`\n\n---\n\n**One-line per-line summary:**\n> **Line 1 (D0120):** PAY $65.00 \u2014 preventive eval, 100% covered, $0 patient. | **Line 2 (D1110):** PAY $120.00 \u2014 preventive prophy, 100% covered, $0 patient. | **Line 3 (D2391):** PAY $144.00 \u2014 posterior composite, 80% plan / 20% coinsurance, $36.00 patient responsibility (CARC 2)."
+        "Claim **CLM-PROF** is fully adjudicated and posted. Here is the complete EOB-style summary:\n\n---\n\n## 835/EOB \u2014 Claim CLM-PROF | Member: Sam Profile (MBR-PROF) | Plan: Acme Dental PPO\n\n**Provider:** PRV-1001 (In-Network) | **Date of Service:** 2026-04-10 | **Total Charged:** $365.00\n\n| Ln | Code | Description | Charged | Allowed | Plan Paid | Patient Resp | Decision | Reason |\n|----|------|-------------|---------|---------|-----------|--------------|----------|--------|\n| 1 | D0120 | Periodic oral exam | $65.00 | $65.00 | **$65.00** | $0.00 | \u2705 PAY | Preventive 100%; deductible met; 1st of 2 allowed exams this year |\n| 2 | D1110 | Adult prophylaxis (cleaning) | $120.00 | $120.00 | **$120.00** | $0.00 | \u2705 PAY | Preventive 100%; deductible met; no prior cleaning in window |\n| 3 | D2391 | Resin composite, 1-surf posterior (Tooth #3-O) | $180.00 | $180.00 | **$144.00** | $36.00 | \u2705 PAY | Basic 80%; 20% coinsurance (CARC 2-PR); ATT-3 X-ray confirms clinical need |\n| | | **TOTALS** | **$365.00** | **$365.00** | **$329.00** | **$36.00** | | |\n\n---\n\n### One-Line Per-Line Summary\n\n- **Line 1 \u2014 D0120 (Periodic Exam) \u2192 PAY $65.00:** Covered 100% preventive, in-network, deductible met, first of two allowed exams in the plan year \u2014 paid in full, $0 patient responsibility.\n- **Line 2 \u2014 D1110 (Prophylaxis) \u2192 PAY $120.00:** Covered 100% preventive, in-network, no prior cleaning on record in the 365-day frequency window \u2014 paid in full, $0 patient responsibility.\n- **Line 3 \u2014 D2391 (Composite Restoration, Tooth #3-O) \u2192 PAY $144.00:** Covered 80% basic restorative, in-network, clinical documentation (ATT-3 periapical X-ray) confirms necessity \u2014 plan pays $144.00, patient owes $36.00 coinsurance (CARC 2-PR)."
       ],
       "tool_uses": []
     }
@@ -480,10 +473,10 @@
       "args": {
         "claim_id": "CLM-PROF"
       },
-      "full_bytes": 11916,
+      "full_bytes": 2426,
       "encoded": false,
       "large": true,
-      "in_context_bytes": 11916
+      "in_context_bytes": 2426
     },
     {
       "turn": 1,
@@ -510,12 +503,12 @@
       "tool": "payer_check_network",
       "args": {
         "provider_id": "PRV-1001",
-        "plan_id": "PLN-DENTAL-PREM"
+        "plan_id": "PLAN-PROF"
       },
-      "full_bytes": 96,
+      "full_bytes": 90,
       "encoded": false,
       "large": false,
-      "in_context_bytes": 96
+      "in_context_bytes": 90
     },
     {
       "turn": 3,
@@ -581,10 +574,10 @@
         "procedure_code": "D0120",
         "window_days": 365
       },
-      "full_bytes": 388,
+      "full_bytes": 722,
       "encoded": false,
       "large": false,
-      "in_context_bytes": 388
+      "in_context_bytes": 722
     },
     {
       "turn": 4,
@@ -594,23 +587,22 @@
         "procedure_code": "D1110",
         "window_days": 365
       },
-      "full_bytes": 391,
+      "full_bytes": 399,
       "encoded": false,
       "large": false,
-      "in_context_bytes": 391
+      "in_context_bytes": 399
     },
     {
       "turn": 4,
-      "tool": "payer_get_claim_history",
+      "tool": "payer_get_attachment",
       "args": {
-        "member_id": "MBR-PROF",
-        "procedure_code": "D2391",
-        "window_days": 365
+        "claim_id": "CLM-PROF",
+        "attachment_ref": "ATT-3"
       },
-      "full_bytes": 420,
+      "full_bytes": 45606,
       "encoded": false,
-      "large": false,
-      "in_context_bytes": 420
+      "large": true,
+      "in_context_bytes": 45606
     },
     {
       "turn": 5,
@@ -665,7 +657,7 @@
       "args": {
         "claim_id": "CLM-PROF",
         "model_version": "claude-sonnet-4-6",
-        "prompt_version_hash": "sha256:27b9bf6bcf2eb42a75a2d83ff0489dd37191ce593270abf57381fe12166caba4",
+        "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
         "lines": [
           {
             "line_number": 1,
@@ -679,15 +671,13 @@
             "carc": [],
             "rarc": [],
             "rule_basis": [
-              "BR-D0120",
-              "preventive 100%",
-              "in-network PRV-1001",
-              "deductible met",
-              "frequency 1/2 per year",
-              "no preauth required"
+              "Preventive exam D0120; covered 100% in-network",
+              "Deductible met; no coinsurance",
+              "Frequency 2/year: current DOS 2026-04-10 is 1st occurrence; prior paid CLM-BIG DOS 2026-05-18 is 2nd \u2014 no breach at time of service",
+              "No preauth required; clean claim"
             ],
             "evidence": {
-              "line": "h:f235ee59a4cd1aa243dfc9461fa61f1758257d02d72ef3b40e0791e7fee57eb0",
+              "line": "h:68c0372a60dcc36c28ac3fd6a60c795a79430c52a047ed2904f680e4f569f1f7",
               "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
               "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
               "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
@@ -707,15 +697,13 @@
             "carc": [],
             "rarc": [],
             "rule_basis": [
-              "BR-D1110",
-              "preventive 100%",
-              "in-network PRV-1001",
-              "deductible met",
-              "frequency 1/2 per year",
-              "no preauth required"
+              "Prophylaxis D1110; covered 100% in-network",
+              "Deductible met; no coinsurance",
+              "Frequency 2/year: no prior paid history in 365-day window \u2014 not breached",
+              "No preauth required; clean claim"
             ],
             "evidence": {
-              "line": "h:195855e24cb59acb2a9c0a43770a59cb1aabc203aadd0ed3032364e739f24452",
+              "line": "h:9d459ab629cc7f8ba295c0bb80fec418b6d6ca360841599fffb4d39e44823396",
               "benefit_rule": "h:6aa95ce350a5ae68447ff0930308af6c8be18852dc9a61ad4cd8b6df6144019a",
               "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
               "fee_schedule": "h:051b27866a908d166545e1e6f17fc1131bc566fff7e6ca5028a955d010d48b8f",
@@ -740,16 +728,14 @@
             ],
             "rarc": [],
             "rule_basis": [
-              "BR-D2391",
-              "basic restorative 80%",
-              "in-network PRV-1001",
-              "deductible met",
-              "20% coinsurance patient responsibility",
-              "no frequency limit",
-              "no preauth required"
+              "Basic restoration D2391 Tooth #3 surface O; covered 80% in-network",
+              "Deductible met; 20% coinsurance = $36.00 patient responsibility (CARC 2 PR)",
+              "ATT-3 periapical X-ray findings: radiograph supports restoration, margins intact, no periapical pathology",
+              "Tooth #3 charted as restored; documentation adequate",
+              "No preauth required; no frequency limit"
             ],
             "evidence": {
-              "line": "h:15e5904c23ff1713b89ab64bb9efa5fdde51259d04153b087a3d763e1a2a144b",
+              "line": "h:e28b553eff1d6f7ec5fc8d7a40c6963fb6d054366843df352851b83baea6dd31",
               "benefit_rule": "h:640bc496210a99d8046aaea10daedf6ac6647a39dd7aa8f56e0e98e5a1de2fda",
               "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
               "fee_schedule": "h:4f4c6ae9788167e817aba3581dc8665df9f2fa6466f2a5b631c5882764ad17f1",
@@ -781,13 +767,13 @@
     "label": "raw_baseline_CLM-PROF",
     "halo_enabled": false,
     "tokens": {
-      "input_tokens": 22830,
-      "output_tokens": 5502,
-      "cache_read_input_tokens": 64731,
-      "cache_creation_input_tokens": 11554
+      "input_tokens": 96000,
+      "output_tokens": 5578,
+      "cache_read_input_tokens": 173374,
+      "cache_creation_input_tokens": 45320
     },
-    "total_tokens": 104617,
-    "estimated_cost_usd": 0.213767,
+    "total_tokens": 320272,
+    "estimated_cost_usd": 0.593632,
     "turns": 10,
     "tool_calls": {
       "payer_get_claim": 1,
@@ -797,7 +783,8 @@
       "payer_get_benefit_rules": 1,
       "payer_get_allowed_amount": 1,
       "payer_get_accumulators": 1,
-      "payer_get_claim_history": 3,
+      "payer_get_claim_history": 2,
+      "payer_get_attachment": 1,
       "payer_adjudicate_line": 3,
       "payer_lookup_reason_code": 1,
       "payer_record_decision": 2,
@@ -806,9 +793,9 @@
     "halo_fetch_calls": 0,
     "halo_maps": 0,
     "encoded_results": 0,
-    "large_results": 1,
-    "bytes_full_total": 11916,
-    "bytes_in_context_total": 11916,
+    "large_results": 2,
+    "bytes_full_total": 48032,
+    "bytes_in_context_total": 48032,
     "bytes_kept_out_of_context": 0,
     "context_reduction_pct": 0.0
   }

@@ -65,7 +65,8 @@ CORE_CODES = [
     ("D0120", "preventive", True, 100, "2/year", 0, False, 6500),
     ("D1110", "preventive", True, 100, "2/year", 0, False, 12000),
     ("D2391", "basic",      True,  80, None,     0, False, 18000),
-    ("D2740", "major",      True,  50, "1/5year", 12, False, 100000),  # crown
+    ("D2740", "major",      True,  50, "1/5year", 12, False, 100000),  # crown (documentation-required)
+    ("D2750", "major",      True,  50, "1/5year", 12, False, 100000),  # crown, porcelain (documentation-required)
     ("D4341", "basic",      True,  80, "2/year", 0, True,  28000),     # perio scaling — needs preauth
     ("D9972", "cosmetic",   False,  0, None,     0, False, 25000),     # external bleaching — not covered
 ]
@@ -270,8 +271,39 @@ async def seed() -> None:
                 f"CLP-{ln}", ln, code, tooth, surface, charged,
             )
 
+        # ── LARGE claim CLM-BIG (Sam Profile) — documentation review, REST-correct ─
+        # An exam + two crowns. The crowns are major restorative → documentation-required,
+        # so the agent fetches their supporting attachment BODIES (large: each carries a
+        # raw image_b64) and reads only narrative/findings. The other attachments are never
+        # fetched — they stay out of context in BOTH arms, so the Halo win here is honest:
+        # it comes from slicing the large bodies it DOES open, not from bulk forced on the
+        # baseline. BIG_ATTACHMENTS controls how many references the claim carries.
+        n_big = int(os.environ.get("BIG_ATTACHMENTS", "14"))
+        big_lines = [
+            (1, "D0120", None, None, 6500),    # exam — preventive, no documentation
+            (2, "D2740", "3", None, 100000),   # crown — major, documentation-required
+            (3, "D2750", "19", None, 100000),  # crown — major, documentation-required
+        ]
+        big_total = sum(c for *_, c in big_lines)
+        await conn.execute(
+            """INSERT INTO ext.claims (id, claim_number, member_id, provider_id, date_received,
+               place_of_service, diagnosis_codes, attachments, total_charged_cents, status)
+               VALUES ('CLM-BIG','CN-BIG','MBR-PROF',$1,$2,'11',$3::jsonb,$4::jsonb,$5,'received')""",
+            PROVIDER_ID, dt.date(2026, 6, 1), json.dumps(["K02.9", "K04.0"]),
+            json.dumps([f"ATT-BIG-{i:02d}" for i in range(1, n_big + 1)]), big_total,
+        )
+        for ln, code, tooth, surface, charged in big_lines:
+            await conn.execute(
+                """INSERT INTO ext.claim_lines (id, claim_id, line_number, procedure_code, tooth,
+                   surface, date_of_service, units, charged_cents, status)
+                   VALUES ($1,'CLM-BIG',$2,$3,$4,$5,'2026-05-18',1,$6,'pending')""",
+                f"CLB-{ln}", ln, code, tooth, surface, charged,
+            )
+
         print("Seeded mimic_payer:")
         print(f"  demo claim   {DEMO_CLAIM} (Dana Whitfield) — pay/pay/reduce/pend/deny → human review")
+        print(f"  large claim  CLM-BIG (Sam Profile)        — exam + 2 crowns, {n_big} attachments, "
+              f"2 need documentation review → human review (above ceiling)")
         print(f"  clean claim  {CLEAN_CLAIM} (Marco Reyes)   — all pay, below ceiling → auto-finalize")
         print(f"  profile claim CLM-PROF (Sam Profile)      — all pay, {n_att} attachments → A/B harness")
         print(f"  plan {PLAN_ID}: annual max $1500, deductible $50, coins 100/80/50")

@@ -1,0 +1,52 @@
+{
+  "runtime": "raw_messages_api",
+  "model": "claude-sonnet-4-6",
+  "claims": {
+    "CLM-PROF": {
+      "desc": "exam + cleaning + 1 filling (8 attachments)",
+      "baseline": {
+        "tokens": 320272,
+        "cost": 0.593632,
+        "turns": 10,
+        "attachment_fetches": 1,
+        "bytes_in_context": 48032
+      },
+      "halo": {
+        "tokens": 141322,
+        "cost": 0.316407,
+        "turns": 13,
+        "attachment_fetches": 1,
+        "halo_fetch_calls": 2,
+        "bytes_in_context": 1580
+      },
+      "delta": {
+        "tokens_pct": 55.9,
+        "cost_pct": 46.7,
+        "context_pct": 96.7
+      }
+    },
+    "CLM-BIG": {
+      "desc": "exam + 2 crowns (14 attachments, 2 need documentation)",
+      "baseline": {
+        "tokens": 678445,
+        "cost": 0.852789,
+        "turns": 12,
+        "attachment_fetches": 2,
+        "bytes_in_context": 82568
+      },
+      "halo": {
+        "tokens": 150085,
+        "cost": 0.264,
+        "turns": 13,
+        "attachment_fetches": 3,
+        "halo_fetch_calls": 3,
+        "bytes_in_context": 2822
+      },
+      "delta": {
+        "tokens_pct": 77.9,
+        "cost_pct": 69.0,
+        "context_pct": 96.6
+      }
+    }
+  }
+}

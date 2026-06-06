@@ -20,6 +20,7 @@ Three properties are load-bearing and enforced here, not left to the model:
 from __future__ import annotations
 
 import asyncio
+import base64
 import datetime as dt
 import hashlib
 import json
@@ -39,6 +40,8 @@ from .models import (
     CheckNetworkIn,
     GetAccumulatorsIn,
     GetAllowedAmountIn,
+    GetAttachmentIn,
+    GetAttachmentsIn,
     GetBenefitRulesIn,
     GetClaimHistoryIn,
     GetClaimIn,
@@ -149,19 +152,21 @@ async def payer_get_agent_provenance() -> dict[str, Any]:
     }
 
 
-# ── 1. get_claim (heavy, Halo-encoded) ───────────────────────────────────────
+# ── 1. get_claim → header + lines + diagnosis + attachment MANIFEST (refs only) ─
 @mcp.tool(
     annotations=ToolAnnotations(
-        title="Get claim header + lines + diagnosis + attachments",
+        title="Get claim header + lines + diagnosis + attachment manifest",
         readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
     )
 )
 async def payer_get_claim(claim_id: str) -> dict[str, Any]:
-    """Fetch the 837 claim: header, service lines, diagnosis, attachment refs.
+    """Fetch the 837 claim: header, service lines, diagnosis, and an attachment MANIFEST.
 
-    Heavy by nature — the attachment bodies (clinical notes / x-ray metadata) are
-    several KB the adjudication mostly does not read, which is exactly the payload
-    Halo keeps out of the model's context until a line needs clinical review.
+    Normalized like a real payer/X12 API: this returns attachment *references* and
+    light metadata (kind, size, which line each documents) — NOT the bodies. The
+    bulky clinical bodies (radiologist narrative, tooth chart, and the raw image) are
+    fetched on demand with ``payer_get_attachment`` only when a line needs clinical
+    documentation review, so the body bytes never enter context unless actually used.
     """
     GetClaimIn(claim_id=claim_id)
     pool = await db.get_pool()
@@ -174,40 +179,132 @@ async def payer_get_claim(claim_id: str) -> dict[str, Any]:
         )
     out = _row(claim)
     out["diagnosis_codes"] = _loads(out.get("diagnosis_codes"))
-    out["attachments"] = _loads(out.get("attachments"))
     out["lines"] = [_row(r) for r in lines]
-    # Synthesize the bulky clinical attachment bodies the header only references.
-    out["attachment_bodies"] = _attachment_bodies(out)
+    out["attachments"] = _attachment_manifest(claim_id, out["lines"], _loads(out.get("attachments")))
     return out
 
 
-def _attachment_bodies(claim: dict[str, Any]) -> list[dict[str, Any]]:
-    """Deterministic, bulky per-attachment clinical detail (notes + x-ray meta).
+# ── attachment synthesis (deterministic from claim_id + ref) ─────────────────
+# A claim references attachments; the bodies are retrieved separately. The body
+# carries a large raw image blob (image_b64) a reviewer never reads — only the
+# narrative/findings matter — which is exactly the field Halo lets the model skip.
+_ATTACH_KINDS = ["periapical_xray", "bitewing_xray", "panoramic_xray", "perio_chart", "clinical_note"]
+_NARRATIVE = (
+    "Patient presents for evaluation. Intraoral examination performed; findings documented "
+    "per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment "
+    "plan discussed with the patient and informed consent obtained. No adverse reaction noted."
+)
+_FINDINGS = [
+    "Radiograph supports the proposed restoration; margins intact, no periapical pathology.",
+    "Generalized moderate periodontitis; scaling and root planing indicated for the quadrant.",
+    "Deep carious lesion approximating the pulp; crown indicated to restore the tooth.",
+    "No acute findings; documentation supports the submitted procedure.",
+]
 
-    Seeded from the claim id so the same claim always yields the same bodies.
-    The decision reads none of this unless a line is flagged for clinical review.
+
+def _needs_documentation(procedure_code: str) -> bool:
+    """Major restorative / endodontic / periodontal / oral-surgery codes need a clinical attachment.
+
+    Preventive (D01/D11) and basic single-surface restorations (D2391/D2392) do not.
     """
-    refs = claim.get("attachments") or []
-    seed = int(hashlib.sha256(str(claim.get("id", "")).encode()).hexdigest()[:12], 16)
-    rng = random.Random(seed)
-    bodies = []
-    paras = (
-        "Patient presents for evaluation. Intraoral examination performed; findings "
-        "documented per chart. Radiographic series reviewed. Treatment plan discussed "
-        "with patient and consent obtained. No adverse reaction noted during procedure."
+    code = (procedure_code or "").upper()
+    return (
+        code.startswith(("D27", "D6"))                  # crowns / fixed prosthodontics
+        or code.startswith("D3")                        # endodontics
+        or (code.startswith("D4") and code >= "D4210")  # periodontal surgery / scaling
+        or code.startswith("D7")                        # oral surgery
     )
-    for ref in refs:
-        bodies.append(
-            {
-                "attachment_ref": ref,
-                "kind": rng.choice(["clinical_note", "periapical_xray", "bitewing_xray", "perio_chart"]),
-                "captured_at": f"2026-0{rng.randint(1, 5)}-{rng.randint(10, 28)}",
-                "narrative": " ".join([paras] * rng.randint(2, 4)),
-                "tooth_chart": {f"{t}": rng.choice(["sound", "restored", "caries", "missing"]) for t in range(1, 33)},
-                "image_meta": {"dpi": 300, "bytes": rng.randint(180000, 920000), "modality": "intraoral"},
-            }
-        )
-    return bodies
+
+
+def _attachment_fields(claim_id: str, ref: str) -> tuple[str, str, int, int, str]:
+    """Deterministic scalar fields for one attachment, drawn in a FIXED order so the
+    manifest (in get_claim) and the body (in get_attachment) always agree."""
+    rng = random.Random(int(hashlib.sha256(f"{claim_id}/{ref}".encode()).hexdigest()[:12], 16))
+    kind = rng.choice(_ATTACH_KINDS)
+    captured_at = f"2026-0{rng.randint(1, 5)}-{rng.randint(10, 28)}"
+    image_kb = rng.randint(18, 40)          # the bulky raw-image payload, in KB
+    narrative_repeat = rng.randint(2, 4)
+    finding = rng.choice(_FINDINGS)
+    return kind, captured_at, image_kb, narrative_repeat, finding
+
+
+def _attachment_manifest(claim_id: str, lines: list[dict], refs: list[str] | None) -> list[dict[str, Any]]:
+    """Light per-attachment metadata: ref, kind, capture date, byte size, and which line
+    it documents. No bodies — this is what a claim fetch should return."""
+    refs = refs or []
+    doc_lines = [ln["line_number"] for ln in (lines or []) if _needs_documentation(ln.get("procedure_code", ""))]
+    manifest = []
+    for i, ref in enumerate(refs):
+        kind, captured_at, image_kb, _, _ = _attachment_fields(claim_id, ref)
+        manifest.append({
+            "ref": ref, "kind": kind, "captured_at": captured_at, "modality": "intraoral",
+            "image_bytes": image_kb * 1024,
+            "documents_line": doc_lines[i] if i < len(doc_lines) else None,
+        })
+    return manifest
+
+
+def _attachment_body(claim_id: str, ref: str) -> dict[str, Any]:
+    """The full attachment: clinical narrative + findings + tooth chart + a large raw
+    image blob. ``image_b64`` is the bulk — a reviewer reads narrative/findings, never
+    the pixels — so under Halo the model fetches those small fields and skips the blob."""
+    kind, captured_at, image_kb, narrative_repeat, finding = _attachment_fields(claim_id, ref)
+    chart_rng = random.Random(int(hashlib.sha256(f"{claim_id}/{ref}/chart".encode()).hexdigest()[:12], 16))
+    blob = hashlib.sha256(f"{claim_id}/{ref}/image".encode()).digest()
+    image_b64 = base64.b64encode(blob * max(1, image_kb * 1024 // len(blob))).decode()
+    return {
+        "attachment_ref": ref, "claim_id": claim_id, "kind": kind, "captured_at": captured_at,
+        "narrative": " ".join([_NARRATIVE] * narrative_repeat),
+        "findings": finding,
+        "tooth_chart": {str(t): chart_rng.choice(["sound", "restored", "caries", "missing"]) for t in range(1, 33)},
+        "image_meta": {"dpi": 300, "bytes": image_kb * 1024, "modality": "intraoral"},
+        "image_b64": image_b64,   # raw pixels — large, not human-readable; do not fetch for review
+    }
+
+
+# ── 1b. get_attachment / get_attachments (the bodies, fetched on demand) ──────
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get ONE attachment body (clinical narrative + image)",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    )
+)
+async def payer_get_attachment(claim_id: str, attachment_ref: str) -> dict[str, Any]:
+    """Fetch one attachment's full body for clinical documentation review.
+
+    Large by nature — it carries the raw image (``image_b64``) plus the narrative,
+    findings, and tooth chart. For review you only need ``narrative`` / ``findings``;
+    the raw image is bulk you never read. Fetch this only for a line that needs
+    documentation (major restorative, endodontic, periodontal, oral surgery).
+    """
+    GetAttachmentIn(claim_id=claim_id, attachment_ref=attachment_ref)
+    pool = await db.get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT attachments FROM ext.claims WHERE id = $1", claim_id)
+    if row is None:
+        return {"error": "claim_not_found", "claim_id": claim_id}
+    if attachment_ref not in (_loads(row["attachments"]) or []):
+        return {"error": "attachment_not_found", "claim_id": claim_id, "attachment_ref": attachment_ref}
+    return _attachment_body(claim_id, attachment_ref)
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get several attachment bodies for a claim in one call",
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False,
+    )
+)
+async def payer_get_attachments(claim_id: str, attachment_refs: list[str]) -> dict[str, Any]:
+    """Batch form of payer_get_attachment — fetch multiple bodies in one call."""
+    GetAttachmentsIn(claim_id=claim_id, attachment_refs=attachment_refs)
+    pool = await db.get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT attachments FROM ext.claims WHERE id = $1", claim_id)
+    if row is None:
+        return {"error": "claim_not_found", "claim_id": claim_id}
+    valid = set(_loads(row["attachments"]) or [])
+    return {"claim_id": claim_id,
+            "attachments": [_attachment_body(claim_id, r) for r in attachment_refs if r in valid]}
 
 
 # ── 2. get_member_coverage (270/271 later) ───────────────────────────────────

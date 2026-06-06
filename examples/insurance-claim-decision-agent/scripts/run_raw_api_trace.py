@@ -48,7 +48,12 @@ RUNS = ROOT / "runs"
 
 THRESHOLD = int(os.environ.get("HALO_THRESHOLD", "2048"))
 MAX_TURNS = int(os.environ.get("RAW_MAX_TURNS", "40"))
-DOMAIN_HINT = "\nFor a claim, fetch the service `lines`; do NOT fetch the `attachment_bodies` bulk."
+DOMAIN_HINT = (
+    "\nFor a claim, fetch the service `lines` from the map. For a line needing documentation review "
+    "(major restorative, endodontic, periodontal, oral surgery), call payer_get_attachment for its "
+    "supporting attachment and read ONLY `narrative` and `findings` — never fetch `image_b64` (raw "
+    "pixels: large and unreadable). Routine preventive/basic lines need no attachment."
+)
 PREVIEW = 240
 
 

@@ -1,0 +1,1099 @@
+{
+  "meta": {
+    "runtime": "raw_messages_api",
+    "model": "claude-sonnet-4-6",
+    "claim_id": "CLM-BIG",
+    "halo_enabled": false,
+    "halo_threshold_bytes": 2048,
+    "adapter": null,
+    "alg": "sha256",
+    "system_prompt_chars": 5509,
+    "tool_count": 15
+  },
+  "turns": [
+    {
+      "index": 1,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 400,
+        "output_tokens": 109,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 3092
+      },
+      "assistant_text": [
+        "I'll work through this systematically. Let me start by gathering all the foundational data in parallel."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01WPQtz9qzmX7x6tAXo3giun",
+          "name": "payer_get_claim",
+          "input": {
+            "claim_id": "CLM-BIG"
+          }
+        },
+        {
+          "id": "toolu_01MM5usysQ1iFXBuapecN9QM",
+          "name": "payer_get_agent_provenance",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1590,
+        "output_tokens": 156,
+        "cache_read_input_tokens": 3092,
+        "cache_creation_input_tokens": 421
+      },
+      "assistant_text": [
+        "Good \u2014 claim retrieved, provenance captured. Now let me pull member coverage and check network status in parallel."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_0196uRbm3rbCxfXkX22ySyER",
+          "name": "payer_get_member_coverage",
+          "input": {
+            "member_id": "MBR-PROF"
+          }
+        },
+        {
+          "id": "toolu_01Fr1nxeoD7QrBLqqE3mPbQ6",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLAN-PROF"
+          }
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2046,
+        "output_tokens": 379,
+        "cache_read_input_tokens": 3092,
+        "cache_creation_input_tokens": 421
+      },
+      "assistant_text": [
+        "Important: the network check was run against PLAN-PROF (wrong plan). Let me re-check against the correct plan ID (PLAN-DENTAL-PPO), and simultaneously pull benefit rules, accumulators, and claim history for all three procedure codes."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_018M25ic1wU8j8BUkrY4UAzG",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLAN-DENTAL-PPO"
+          }
+        },
+        {
+          "id": "toolu_017ucsvLkNrKjkvSyLachQTn",
+          "name": "payer_get_benefit_rules",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D2740",
+              "D2750"
+            ]
+          }
+        },
+        {
+          "id": "toolu_01VkTydiPSnj9PspPGihPFrw",
+          "name": "payer_get_accumulators",
+          "input": {
+            "member_id": "MBR-PROF",
+            "plan_year": 2026
+          }
+        },
+        {
+          "id": "toolu_01CP1o84ZEiier3WXtk61wc1",
+          "name": "payer_get_allowed_amount",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D2740",
+              "D2750"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1353,
+        "output_tokens": 509,
+        "cache_read_input_tokens": 3567,
+        "cache_creation_input_tokens": 1558
+      },
+      "assistant_text": [
+        "Good. Provider is in-network on the correct plan. Now I need to:\n1. Fetch claim history for frequency checks on all three codes\n2. Pull the clinical attachments for Lines 2 (D2740, porcelain crown) and 3 (D2750, PFM crown) \u2014 both major restorative procedures\n\nLet me do all of that in parallel."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_019PJkbgFLwSbbyzCkfTLv6g",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D0120",
+            "window_days": 365
+          }
+        },
+        {
+          "id": "toolu_01Eehn1K6XPRyBm87HqJoQuP",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D2740",
+            "window_days": 1825
+          }
+        },
+        {
+          "id": "toolu_01UJtyBPnTtNv8fMwitaJEJZ",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D2750",
+            "window_days": 1825
+          }
+        },
+        {
+          "id": "toolu_012UtwSNwVSgTeXTXzRGxukK",
+          "name": "payer_get_attachment",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-01"
+          }
+        },
+        {
+          "id": "toolu_014RccnrqqyH5ps8cpnCztHJ",
+          "name": "payer_get_attachment",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-02"
+          }
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 68953,
+        "output_tokens": 1002,
+        "cache_read_input_tokens": 5182,
+        "cache_creation_input_tokens": 1381
+      },
+      "assistant_text": [
+        "Excellent. Clinical documentation assessment complete:\n\n- **ATT-BIG-01** (panoramic, documents Line 2 / D2740, tooth 3): findings confirm \"Radiograph supports the proposed restoration; margins intact, no periapical pathology.\" Tooth 3 is marked \"sound\" on the panoramic chart \u2014 but the clinical indication for a crown is independently supported by the narrative. \u2705\n- **ATT-BIG-02** (bitewing, documents Line 3 / D2750, tooth 19): same findings \u2014 \"Radiograph supports the proposed restoration; margins intact, no periapical pathology.\" However, tooth 19 appears as \"missing\" in this tooth chart. This is a flag \u2014 bitewing chart disagrees with the claim (crown on an apparently missing tooth). \u26a0\ufe0f\n\n**Key findings summary before running the engine:**\n\n| Item | Assessment |\n|---|---|\n| Member status | Active, eff. 2021-01-01, no term date \u2705 |\n| Service dates (2026-05-18) | Within coverage year \u2705 |\n| Provider PRV-1001 | In-network on PLAN-DENTAL-PPO \u2705 |\n| Line 1 D0120 \u2013 frequency (2/year) | History shows one other D0120 on 2026-04-10 (CLM-PROF, pending). That's only 1 prior + this claim = 2 total for 2026. Within limit \u2705 |\n| Line 1 D0120 \u2013 waiting period | 0 months \u2705 |\n| Line 1 D0120 \u2013 preauth | Not required \u2705 |\n| Line 2 D2740 \u2013 frequency (1/5yr) | No prior paid history \u2705 |\n| Line 2 D2740 \u2013 waiting period | 12 months; member effective 2021-01-01, DOS 2026-05-18 \u2192 5+ years \u2705 |\n| Line 3 D2750 \u2013 frequency (1/5yr) | No prior paid history \u2705 |\n| Line 3 D2750 \u2013 waiting period | 12 months; met \u2705 |\n| Annual max used | $0 of $1,500 \u2705 |\n| Deductible | Fully met ($5,000/$5,000) \u2705 |\n| Line 3 tooth 19 attachment | Bitewing chart shows tooth 19 \"missing\" \u2014 potential clinical conflict \u26a0\ufe0f |\n\nNow I need to verify reason codes, then run the deterministic engine on all three lines simultaneously."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01FoJLmmeeqSxpHJQqTnWsWM",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "4"
+          }
+        },
+        {
+          "id": "toolu_0122Cm5HXJ1sjCGnNszv5DMT",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "18"
+          }
+        },
+        {
+          "id": "toolu_0185CEfNk6dKq4CnBu1FnJGU",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "96"
+          }
+        },
+        {
+          "id": "toolu_01Weg9n1nExQ1bQPxs8Jm9AZ",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "197"
+          }
+        },
+        {
+          "id": "toolu_01SSpTkUy16nEv4t5HRZKLrp",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 1
+          }
+        },
+        {
+          "id": "toolu_016AuD7qikekghm2VYEurpV7",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 2
+          }
+        },
+        {
+          "id": "toolu_01LT1dHnsrxdvWD83iKTF2rn",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 3
+          }
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1949,
+        "output_tokens": 146,
+        "cache_read_input_tokens": 6660,
+        "cache_creation_input_tokens": 69478
+      },
+      "assistant_text": [
+        "Good. Let me also look up CARC 2 (suggested by engine for Lines 2 & 3) and CARC 16 (for completeness on the tooth-19 documentation concern)."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01Q1yat6m1GogR8MrDbPuGf5",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "2"
+          }
+        },
+        {
+          "id": "toolu_01HPNroKNgQfYEr2yufxCKzU",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "16"
+          }
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 230,
+        "output_tokens": 2037,
+        "cache_read_input_tokens": 76188,
+        "cache_creation_input_tokens": 1945
+      },
+      "assistant_text": [
+        "Now I have everything I need to make the line decisions. Let me analyze:\n\n**Engine results and adjudication decisions:**\n\n- **Line 1 (D0120):** Allowed $65, plan pays $65, patient $0. No review required. `review_required=false`. \u2192 **PAY** \u2014 preventive, 100% coverage, deductible met, frequency OK (1st occurrence in 2026, limit is 2/year). No CARC/RARC needed on clean pay.\n\n- **Line 2 (D2740):** Allowed $1,000, plan pays $500, patient $500 (50% coinsurance). `review_required=false`. \u2192 **PAY** \u2014 major restorative, 50% benefit, deductible met, frequency clear, waiting period met, documentation (ATT-BIG-01) affirmatively supports the procedure. CARC 2 (PR coinsurance) applies to patient responsibility portion.\n\n- **Line 3 (D2750):** Engine says pay 50/50, `review_required=false`. However, the supporting attachment (ATT-BIG-02) shows tooth 19 as \"missing\" on the tooth chart \u2014 a clinical conflict: you cannot place a crown (D2750) on a missing tooth. Despite the engine's clean result, this is a documentation/clinical inconsistency that the engine cannot resolve. Per the operating rules, a documentation conflict that could result in a denial or reduction **must go to a human examiner**. I will \u2192 **PEND** Line 3 with CARC 16, set plan_paid = 0, patient_resp = 0, and route to human review.\n\nNow recording decisions for all three lines:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_012Dn7TzkZyuSF6e9PmtQ5Rt",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": null,
+                "rarc": null,
+                "rule_basis": "BR-D0120: preventive, 100% coverage, deductible met ($5000/$5000), frequency 1 of 2 allowed in 2026, waiting period 0 months, no preauth required, provider in-network",
+                "evidence": {
+                  "line": "h:3f0bc89bd6eb614a3849c7ba920a5b79ec7ae3f083cb723ad548fd18f1efc70a",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D2740",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": "2",
+                "rarc": null,
+                "rule_basis": "BR-D2740: major restorative, 50% coinsurance, deductible met, no prior D2740 in 5-year window, waiting period met (effective 2021-01-01, DOS 2026-05-18 = 64+ months), no preauth required, ATT-BIG-01 confirms radiographic support with no periapical pathology",
+                "evidence": {
+                  "line": "h:baa8126cb11f011f90f05f72f440f71bf96d5c56e4e62883e0708d8d5a5d233b",
+                  "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c713e9688b0b343723bbbe5bf22c553f3aa3f",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b",
+                  "attachment": "ATT-BIG-01"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2750",
+                "decision": "pend",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 0,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": "16",
+                "rarc": null,
+                "rule_basis": "BR-D2750: pend pending clinical review \u2014 ATT-BIG-02 (bitewing documenting Line 3) tooth chart records tooth 19 as 'missing', conflicting with D2750 crown claim on tooth 19. Cannot confirm crown is clinically appropriate on a missing tooth without examiner resolution.",
+                "evidence": {
+                  "line": "h:cb0544356a41df143049c067131aa0b339ca7d570047c21ae230a84a790b8144",
+                  "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b",
+                  "attachment": "ATT-BIG-02"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2753,
+        "output_tokens": 1531,
+        "cache_read_input_tokens": 76188,
+        "cache_creation_input_tokens": 1945
+      },
+      "assistant_text": [
+        "The schema requires `carc`, `rarc`, and `rule_basis` as arrays. Fixing the format:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01EuxRziCDuo2yozkymPJgAe",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D0120: preventive, 100% coverage",
+                  "deductible met ($5000/$5000)",
+                  "frequency 1 of 2 allowed in 2026",
+                  "waiting period 0 months",
+                  "no preauth required",
+                  "provider in-network on PLAN-DENTAL-PPO"
+                ],
+                "evidence": {
+                  "line": "h:3f0bc89bd6eb614a3849c7ba920a5b79ec7ae3f083cb723ad548fd18f1efc70a",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D2740",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  "2"
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D2740: major restorative, 50% coinsurance",
+                  "deductible met",
+                  "no prior D2740 in 5-year window",
+                  "waiting period met (effective 2021-01-01 DOS 2026-05-18 = 64+ months)",
+                  "no preauth required",
+                  "ATT-BIG-01 confirms radiographic support with no periapical pathology"
+                ],
+                "evidence": {
+                  "line": "h:baa8126cb11f011f90f05f72f440f71bf96d5c56e4e62883e0708d8d5a5d233b",
+                  "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c713e9688b0b343723bbbe5bf22c553f3aa3f",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b",
+                  "attachment": "ATT-BIG-01"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2750",
+                "decision": "pend",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 0,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [
+                  "16"
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D2750: clinical documentation conflict",
+                  "ATT-BIG-02 bitewing tooth chart records tooth 19 as missing",
+                  "D2750 crown cannot be placed on a missing tooth",
+                  "pend for examiner resolution before pay or deny"
+                ],
+                "evidence": {
+                  "line": "h:cb0544356a41df143049c067131aa0b339ca7d570047c21ae230a84a790b8144",
+                  "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b",
+                  "attachment": "ATT-BIG-02"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 3817,
+        "output_tokens": 1458,
+        "cache_read_input_tokens": 78183,
+        "cache_creation_input_tokens": 572
+      },
+      "assistant_text": [
+        "The schema expects CARC entries as objects with code/group fields. Let me fix that:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_013FTsLLAKTMWJW6EZquf6js",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D0120: preventive 100% coverage",
+                  "deductible met",
+                  "frequency 1 of 2/year",
+                  "no waiting period",
+                  "no preauth",
+                  "in-network"
+                ],
+                "evidence": {
+                  "line": "h:3f0bc89bd6eb614a3849c7ba920a5b79ec7ae3f083cb723ad548fd18f1efc70a",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D2740",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D2740: major 50% coinsurance",
+                  "deductible met",
+                  "no prior D2740 in 5yr window",
+                  "waiting period met 64+ months",
+                  "no preauth",
+                  "ATT-BIG-01 supports restoration"
+                ],
+                "evidence": {
+                  "line": "h:baa8126cb11f011f90f05f72f440f71bf96d5c56e4e62883e0708d8d5a5d233b",
+                  "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c713e9688b0b343723bbbe5bf22c553f3aa3f",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2750",
+                "decision": "pend",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 0,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [
+                  {
+                    "code": "16",
+                    "group": "CO"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "BR-D2750: pend - clinical documentation conflict",
+                  "ATT-BIG-02 bitewing tooth chart records tooth 19 as missing",
+                  "D2750 crown on missing tooth 19 requires examiner resolution"
+                ],
+                "evidence": {
+                  "line": "h:cb0544356a41df143049c067131aa0b339ca7d570047c21ae230a84a790b8144",
+                  "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 3216,
+        "output_tokens": 397,
+        "cache_read_input_tokens": 80264,
+        "cache_creation_input_tokens": 647
+      },
+      "assistant_text": [
+        "`requires_human: true` \u2014 Line 3 is pended. Opening the human review gate now:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01Sp6yp5hMR1pGNCU2SuRgqu",
+          "name": "payer_request_review",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "summary": "Line 3 (D2750 \u2013 porcelain-fused-to-metal crown, tooth 19) is pended due to a clinical documentation conflict. The supporting attachment ATT-BIG-02 (bitewing x-ray, captured 2026-04-10) lists tooth 19 as \"missing\" in its tooth chart, while the claim bills for a crown (D2750) on that same tooth. A crown cannot be placed on a missing tooth. Lines 1 (D0120, pay $65.00 plan) and 2 (D2740 tooth 3, pay $500.00 plan / $500.00 patient) are clean and ready to post pending this resolution. Examiner should: (a) obtain corrected documentation or a clinical note confirming tooth 19 is present/erupted, or (b) confirm the tooth is missing and deny D2750 as clinically unsupported, or (c) override if the tooth chart entry was a documentation error.",
+            "reason": "clinical_documentation_conflict: ATT-BIG-02 tooth chart shows tooth 19 as missing; D2750 crown billed for same tooth",
+            "reviewer_role": "claims_examiner"
+          }
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2095,
+        "output_tokens": 122,
+        "cache_read_input_tokens": 82417,
+        "cache_creation_input_tokens": 175
+      },
+      "assistant_text": [
+        "The examiner (`ex-204-rkhan`) has **confirmed** the proposed adjudication as-is \u2014 no line overrides. The pend on Line 3 stands as proposed (`is_override: false`). Now posting the final adjudication:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01TNpTptgmCwXijj7EPxh1xv",
+          "name": "payer_post_adjudication",
+          "input": {
+            "claim_id": "CLM-BIG"
+          }
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "stop_reason": "end_turn",
+      "usage": {
+        "input_tokens": 836,
+        "output_tokens": 743,
+        "cache_read_input_tokens": 84030,
+        "cache_creation_input_tokens": 120
+      },
+      "assistant_text": [
+        "Adjudication posted to `ext.claim_lines` (835/EOB). Here is the final summary:\n\n---\n\n## CLM-BIG \u2014 Final Adjudication Summary (EOB)\n\n**Member:** Sam Profile (MBR-PROF) | **Plan:** Acme Dental PPO (PLAN-DENTAL-PPO) | **Provider:** PRV-1001 (in-network) | **DOS:** 2026-05-18\n\n| Line | Code | Description | Charged | Allowed | Plan Paid | Patient Resp. | Decision | CARC | Basis |\n|------|------|-------------|---------|---------|-----------|---------------|----------|------|-------|\n| 1 | D0120 | Periodic oral exam | $65.00 | $65.00 | **$65.00** | $0.00 | \u2705 **PAY** | \u2014 | Preventive, 100% benefit; deductible met; 1st of 2 allowed exams in 2026 |\n| 2 | D2740 | Porcelain crown, tooth 3 | $1,000.00 | $1,000.00 | **$500.00** | $500.00 | \u2705 **PAY** | PR-2 (coinsurance) | Major restorative, 50% plan benefit; deductible met; 5-yr frequency clear; 64-month waiting period met; ATT-BIG-01 confirms radiographic support |\n| 3 | D2750 | PFM crown, tooth 19 | $1,000.00 | $1,000.00 | **$0.00** | $0.00 | \u23f8 **PEND** | CO-16 (missing info) | ATT-BIG-02 bitewing tooth chart records tooth 19 as **missing** \u2014 crown not clinically supportable without corrected documentation; examiner confirmed pend |\n\n**Totals:** Plan paid **$565.00** | Patient responsibility **$500.00** | Pending (held) **$1,000.00**\n**Human review:** Approval ID `89b65fa1` \u2014 examiner `ex-204-rkhan` confirmed proposed decisions at 2026-06-06T16:48:37Z.\n\n---\n\n### One-line per-line summary:\n- **Line 1 (D0120):** \u2705 **PAID** \u2014 $65.00 to plan, $0 to patient; preventive exam at 100%, within annual frequency, no issues.\n- **Line 2 (D2740):** \u2705 **PAID** \u2014 $500.00 to plan, $500.00 to patient (50% coinsurance PR-2); major crown tooth 3, all benefit rules and clinical documentation met.\n- **Line 3 (D2750):** \u23f8 **PENDED** \u2014 $0 paid; CARC CO-16 (missing information) \u2014 bitewing attachment records tooth 19 as missing, conflicting with a crown claim on that tooth; held for corrected clinical documentation."
+      ],
+      "tool_uses": []
+    }
+  ],
+  "tool_results": [
+    {
+      "turn": 1,
+      "tool": "payer_get_claim",
+      "args": {
+        "claim_id": "CLM-BIG"
+      },
+      "full_bytes": 3350,
+      "encoded": false,
+      "large": true,
+      "in_context_bytes": 3350
+    },
+    {
+      "turn": 1,
+      "tool": "payer_get_agent_provenance",
+      "args": {},
+      "full_bytes": 208,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 208
+    },
+    {
+      "turn": 2,
+      "tool": "payer_get_member_coverage",
+      "args": {
+        "member_id": "MBR-PROF"
+      },
+      "full_bytes": 446,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 446
+    },
+    {
+      "turn": 2,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLAN-PROF"
+      },
+      "full_bytes": 90,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 90
+    },
+    {
+      "turn": 3,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLAN-DENTAL-PPO"
+      },
+      "full_bytes": 94,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 94
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_benefit_rules",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D2740",
+          "D2750"
+        ]
+      },
+      "full_bytes": 687,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 687
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_accumulators",
+      "args": {
+        "member_id": "MBR-PROF",
+        "plan_year": 2026
+      },
+      "full_bytes": 125,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 125
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_allowed_amount",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D2740",
+          "D2750"
+        ]
+      },
+      "full_bytes": 92,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 92
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D0120",
+        "window_days": 365
+      },
+      "full_bytes": 732,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 732
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D2740",
+        "window_days": 1825
+      },
+      "full_bytes": 398,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 398
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D2750",
+        "window_days": 1825
+      },
+      "full_bytes": 399,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 399
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_attachment",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "attachment_ref": "ATT-BIG-01"
+      },
+      "full_bytes": 28681,
+      "encoded": false,
+      "large": true,
+      "in_context_bytes": 28681
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_attachment",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "attachment_ref": "ATT-BIG-02"
+      },
+      "full_bytes": 50537,
+      "encoded": false,
+      "large": true,
+      "in_context_bytes": 50537
+    },
+    {
+      "turn": 5,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "4"
+      },
+      "full_bytes": 45,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 45
+    },
+    {
+      "turn": 5,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "18"
+      },
+      "full_bytes": 78,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 78
+    },
+    {
+      "turn": 5,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "96"
+      },
+      "full_bytes": 70,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 70
+    },
+    {
+      "turn": 5,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "197"
+      },
+      "full_bytes": 114,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 114
+    },
+    {
+      "turn": 5,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 1
+      },
+      "full_bytes": 863,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 863
+    },
+    {
+      "turn": 5,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 2
+      },
+      "full_bytes": 902,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 902
+    },
+    {
+      "turn": 5,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 3
+      },
+      "full_bytes": 902,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 902
+    },
+    {
+      "turn": 6,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "2"
+      },
+      "full_bytes": 66,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 66
+    },
+    {
+      "turn": 6,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "16"
+      },
+      "full_bytes": 115,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 115
+    },
+    {
+      "turn": 9,
+      "tool": "payer_record_decision",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "model_version": "claude-sonnet-4-6",
+        "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+        "lines": [
+          {
+            "line_number": 1,
+            "procedure_code": "D0120",
+            "decision": "pay",
+            "allowed_cents": 6500,
+            "plan_paid_cents": 6500,
+            "patient_resp_cents": 0,
+            "deductible_cents": 0,
+            "coinsurance_cents": 0,
+            "carc": [],
+            "rarc": [],
+            "rule_basis": [
+              "BR-D0120: preventive 100% coverage",
+              "deductible met",
+              "frequency 1 of 2/year",
+              "no waiting period",
+              "no preauth",
+              "in-network"
+            ],
+            "evidence": {
+              "line": "h:3f0bc89bd6eb614a3849c7ba920a5b79ec7ae3f083cb723ad548fd18f1efc70a",
+              "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 2,
+            "procedure_code": "D2740",
+            "decision": "pay",
+            "allowed_cents": 100000,
+            "plan_paid_cents": 50000,
+            "patient_resp_cents": 50000,
+            "deductible_cents": 0,
+            "coinsurance_cents": 50000,
+            "carc": [
+              {
+                "code": "2",
+                "group": "PR"
+              }
+            ],
+            "rarc": [],
+            "rule_basis": [
+              "BR-D2740: major 50% coinsurance",
+              "deductible met",
+              "no prior D2740 in 5yr window",
+              "waiting period met 64+ months",
+              "no preauth",
+              "ATT-BIG-01 supports restoration"
+            ],
+            "evidence": {
+              "line": "h:baa8126cb11f011f90f05f72f440f71bf96d5c56e4e62883e0708d8d5a5d233b",
+              "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c713e9688b0b343723bbbe5bf22c553f3aa3f",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 3,
+            "procedure_code": "D2750",
+            "decision": "pend",
+            "allowed_cents": 100000,
+            "plan_paid_cents": 0,
+            "patient_resp_cents": 0,
+            "deductible_cents": 0,
+            "coinsurance_cents": 0,
+            "carc": [
+              {
+                "code": "16",
+                "group": "CO"
+              }
+            ],
+            "rarc": [],
+            "rule_basis": [
+              "BR-D2750: pend - clinical documentation conflict",
+              "ATT-BIG-02 bitewing tooth chart records tooth 19 as missing",
+              "D2750 crown on missing tooth 19 requires examiner resolution"
+            ],
+            "evidence": {
+              "line": "h:cb0544356a41df143049c067131aa0b339ca7d570047c21ae230a84a790b8144",
+              "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          }
+        ]
+      },
+      "full_bytes": 227,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 227
+    },
+    {
+      "turn": 10,
+      "tool": "payer_request_review",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "summary": "Line 3 (D2750 \u2013 porcelain-fused-to-metal crown, tooth 19) is pended due to a clinical documentation conflict. The supporting attachment ATT-BIG-02 (bitewing x-ray, captured 2026-04-10) lists tooth 19 as \"missing\" in its tooth chart, while the claim bills for a crown (D2750) on that same tooth. A crown cannot be placed on a missing tooth. Lines 1 (D0120, pay $65.00 plan) and 2 (D2740 tooth 3, pay $500.00 plan / $500.00 patient) are clean and ready to post pending this resolution. Examiner should: (a) obtain corrected documentation or a clinical note confirming tooth 19 is present/erupted, or (b) confirm the tooth is missing and deny D2750 as clinically unsupported, or (c) override if the tooth chart entry was a documentation error.",
+        "reason": "clinical_documentation_conflict: ATT-BIG-02 tooth chart shows tooth 19 as missing; D2750 crown billed for same tooth",
+        "reviewer_role": "claims_examiner"
+      },
+      "full_bytes": 422,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 422
+    },
+    {
+      "turn": 11,
+      "tool": "payer_post_adjudication",
+      "args": {
+        "claim_id": "CLM-BIG"
+      },
+      "full_bytes": 414,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 414
+    }
+  ],
+  "fetches": [],
+  "summary": {
+    "label": "raw_baseline_CLM-BIG",
+    "halo_enabled": false,
+    "tokens": {
+      "input_tokens": 89238,
+      "output_tokens": 8589,
+      "cache_read_input_tokens": 498863,
+      "cache_creation_input_tokens": 81755
+    },
+    "total_tokens": 678445,
+    "estimated_cost_usd": 0.852789,
+    "turns": 12,
+    "tool_calls": {
+      "payer_get_claim": 1,
+      "payer_get_agent_provenance": 1,
+      "payer_get_member_coverage": 1,
+      "payer_check_network": 2,
+      "payer_get_benefit_rules": 1,
+      "payer_get_accumulators": 1,
+      "payer_get_allowed_amount": 1,
+      "payer_get_claim_history": 3,
+      "payer_get_attachment": 2,
+      "payer_lookup_reason_code": 6,
+      "payer_adjudicate_line": 3,
+      "payer_record_decision": 3,
+      "payer_request_review": 1,
+      "payer_post_adjudication": 1
+    },
+    "halo_fetch_calls": 0,
+    "halo_maps": 0,
+    "encoded_results": 0,
+    "large_results": 3,
+    "bytes_full_total": 82568,
+    "bytes_in_context_total": 82568,
+    "bytes_kept_out_of_context": 0,
+    "context_reduction_pct": 0.0
+  }
+}
