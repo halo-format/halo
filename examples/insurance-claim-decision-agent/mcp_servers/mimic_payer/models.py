@@ -14,6 +14,16 @@ class GetClaimIn(BaseModel):
     claim_id: str
 
 
+class GetAttachmentIn(BaseModel):
+    claim_id: str
+    attachment_ref: str
+
+
+class GetAttachmentsIn(BaseModel):
+    claim_id: str
+    attachment_refs: list[str]
+
+
 class GetMemberCoverageIn(BaseModel):
     member_id: str
 

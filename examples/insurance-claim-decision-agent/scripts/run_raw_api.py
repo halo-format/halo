@@ -65,7 +65,9 @@ _STRARR = {"type": "array", "items": {"type": "string"}}
 
 TOOL_DEFS = [
     ("payer_get_agent_provenance", "Return the canonical prompt_version_hash (sha256 over CLAUDE.md).", _obj({}, [])),
-    ("payer_get_claim", "Fetch the 837 claim: header + lines + diagnosis + attachment refs (heavy).", _obj({"claim_id": _STR}, ["claim_id"])),
+    ("payer_get_claim", "Fetch the 837 claim: header + lines + diagnosis + attachment MANIFEST (refs + metadata, not bodies).", _obj({"claim_id": _STR}, ["claim_id"])),
+    ("payer_get_attachment", "Fetch ONE attachment body for documentation review (large: narrative + findings + tooth_chart + raw image_b64). Read narrative/findings; never read image_b64.", _obj({"claim_id": _STR, "attachment_ref": _STR}, ["claim_id", "attachment_ref"])),
+    ("payer_get_attachments", "Batch: fetch several attachment bodies for a claim in one call.", _obj({"claim_id": _STR, "attachment_refs": _STRARR}, ["claim_id", "attachment_refs"])),
     ("payer_get_member_coverage", "Member eligibility, effective dates, and the plan benefit design.", _obj({"member_id": _STR}, ["member_id"])),
     ("payer_get_benefit_rules", "Per-code coverage %, frequency, waiting, preauth, category. Pass procedure_codes for this claim's codes only.", _obj({"plan_id": _STR, "procedure_codes": _STRARR}, ["plan_id"])),
     ("payer_get_accumulators", "Deductible met, annual max used, OOP met for the plan year.", _obj({"member_id": _STR, "plan_year": _INT}, ["member_id", "plan_year"])),
@@ -82,7 +84,12 @@ TOOL_DEFS = [
 DISPATCH = {name: getattr(S, name) for name, _, _ in TOOL_DEFS}
 
 # A one-line domain hint appended to the package's generic navigation guidance.
-DOMAIN_HINT = "\nFor a claim, fetch the service `lines`; do NOT fetch the `attachment_bodies` bulk."
+DOMAIN_HINT = (
+    "\nFor a claim, fetch the service `lines` from the map. For a line needing documentation review "
+    "(major restorative, endodontic, periodontal, oral surgery), call payer_get_attachment for its "
+    "supporting attachment and read ONLY `narrative` and `findings` — never fetch `image_b64` (raw "
+    "pixels: large and unreadable). Routine preventive/basic lines need no attachment."
+)
 
 
 def build_tools(halo_tool_def: dict | None) -> list[dict]:

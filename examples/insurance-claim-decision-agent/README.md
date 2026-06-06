@@ -59,7 +59,9 @@ decision record — and never changes when you integrate.
 | Tool | Purpose | readOnly |
 |------|---------|:--------:|
 | `payer_get_agent_provenance` | Canonical `prompt_version_hash` (sha256 over CLAUDE.md) | ✅ |
-| `payer_get_claim`            | Claim header + lines + diagnosis + attachments (heavy, Halo) | ✅ |
+| `payer_get_claim`            | Claim header + lines + diagnosis + attachment **manifest** (refs + metadata, not bodies) | ✅ |
+| `payer_get_attachment`       | One attachment **body** for documentation review — large (narrative + findings + raw `image_b64`), Halo | ✅ |
+| `payer_get_attachments`      | Batch: several attachment bodies in one call | ✅ |
 | `payer_get_member_coverage`  | Member eligibility, effective dates, plan (270/271 later) | ✅ |
 | `payer_get_benefit_rules`    | Per-code coverage %, frequency, waiting, preauth, category | ✅ |
 | `payer_get_accumulators`     | Deductible met, annual max used, OOP met | ✅ |
@@ -86,9 +88,25 @@ input or computes an amount.
 
 ## Where Halo lands
 
-- `payer_get_claim` is a header plus many lines plus diagnosis and **bulky
-  clinical attachment bodies**; the agent fetches the line codes and amounts it is
-  adjudicating and pulls attachments only if a line needs clinical review.
+The tools are **normalized like a real payer/X12 API** — a fetch returns
+references, not the bodies behind them — and that is exactly what makes Halo's win
+honest rather than manufactured:
+
+- `payer_get_claim` returns the header, lines, diagnosis, and an **attachment
+  manifest** (each entry: `ref`, `kind`, `image_bytes`, and the `documents_line` it
+  supports) — **not** the bodies. The manifest is small.
+- A clinical body is fetched with **`payer_get_attachment(claim_id, ref)`** only
+  when a line needs documentation review (major restorative, endodontic,
+  periodontal, oral surgery). That body is **large** — it carries the raw image
+  (`image_b64`) alongside the radiologist `narrative` and `findings`. For review
+  the agent needs only the narrative/findings, so Halo lets it fetch those
+  (~hundreds of bytes) and skip the image bulk (tens of KB), verified on read.
+  This is the honest win: **both** the baseline and the Halo arm fetch the *same*
+  bodies — Halo simply slices each one — and the attachments no line reviews are
+  fetched by neither, so nothing is force-fed to the baseline.
+- Because `payer_get_attachment` carries the `claim_id`, its result folds into the
+  claim's **own map** under `argJoin` (`<CLM>.payer_get_attachment.narrative`) —
+  one growing entity map per claim, not a fragment per call.
 - `payer_get_claim_history` and the whole-plan `payer_get_benefit_rules` are large;
   Halo slices them to the codes relevant to this claim.
 - And the part that matters most: **`agent.decisions.evidence` records the exact
@@ -156,7 +174,7 @@ mixed-outcome EOB below.
 
 The same agent runs without the Agent SDK or the CLI, on a hand-built tool-use
 loop over `anthropic.Anthropic().messages.create(...)` — `scripts/run_raw_api.py`.
-The 13 `mimic-payer` tools become raw tool definitions, dispatched in-process to
+The `mimic-payer` tools become raw tool definitions, dispatched in-process to
 the same server functions; the deterministic engine, the human-review gate, the
 evidence store, and the reason-code reference are reused unchanged. This is the
 "tools are the swap point, everything above them is portable" property made
@@ -164,9 +182,18 @@ literal — only the runtime around the tools differs.
 
 ```bash
 set -a && . ./.env && set +a            # ANTHROPIC_API_KEY + DB DSN
-# CLM-PROF auto-finalizes (no examiner needed); CLM-1001 needs reviewer_console auto.
-HALO=0 RUN_LABEL=raw_baseline python -m scripts.run_raw_api CLM-PROF
-HALO=1 RUN_LABEL=raw_halo     python -m scripts.run_raw_api CLM-PROF   # encode + halo_fetch by hand
+# CLM-BIG / CLM-1001 hit the review gate → run `python -m scripts.reviewer_console auto` alongside.
+HALO=0 RUN_LABEL=raw_baseline python -m scripts.run_raw_api CLM-BIG
+HALO=1 RUN_LABEL=raw_halo     python -m scripts.run_raw_api CLM-BIG   # encode + halo_fetch by hand
+```
+
+For a full, inspectable trace (per-turn API usage, the content-addressed node tree
+with a recomputed hash check on every handle, the shape maps, and each verified
+fetch), use `scripts/run_raw_api_trace.py` — it writes `runs/trace_<label>.{json,md}`:
+
+```bash
+HALO=0 python -m scripts.run_raw_api_trace CLM-BIG
+HALO=1 python -m scripts.run_raw_api_trace CLM-BIG
 ```
 
 `HALO=1` replaces the Agent-SDK `PostToolUse` hook with an explicit encode step in
@@ -203,6 +230,13 @@ it goes to a human examiner, who confirms the proposed adjudication. A second
 claim, **CLM-2001 (Marco Reyes)**, is two clean preventive lines below the ceiling
 — the **auto-finalize** path with no human gate.
 
+A third claim, **CLM-BIG (Sam Profile)**, is the documentation-heavy case used for
+the raw-API A/B below: an exam plus two crowns, with 14 attachments. The crowns are
+major restorative, so the agent fetches their supporting attachment **bodies**
+(`payer_get_attachment`) for documentation review — each body is large (a raw
+`image_b64`) and is where Halo slices to `narrative`+`findings`. `BIG_ATTACHMENTS`
+controls the attachment count.
+
 ## Human-in-the-loop
 
 `payer_request_review` creates a pending `agent.approvals` row and **blocks the
@@ -235,6 +269,14 @@ non-deterministic, so run each arm a few times and compare means.
 
 ### A measured profile (with vs without Halo)
 
+> These Claude Code / Agent SDK figures were measured against the **prior** tool
+> design, where `payer_get_claim` returned the attachment *bodies* inline. The
+> tools have since been normalized (bodies behind `payer_get_attachment`), so the
+> per-result numbers below no longer match the current shapes — treat them as
+> illustrative of the *runtime*, and see the raw-API section above for the current,
+> REST-correct measurement. The qualitative conclusion (host spill + heavy cached
+> prefix → adopt here for evidence, not token savings) still holds.
+
 `scripts/profile_ab.py` adjudicates the seeded **all-pay** profiling claim
 `CLM-PROF` (no human gate, so both arms run unattended) and writes
 `runs/prof_<label>.json` after every streamed message. Measured on
@@ -255,11 +297,10 @@ result** — is where Halo is unambiguous:
 | small (8 attachments)  |  6,785 B | 1,040 B | **85%** |  5,398 B |
 | big (40 attachments)   | 56,247 B |   936 B | **98%** | 54,526 B |
 
-**How to read this honestly.** Halo cuts *per-result* context by 85–98% and the
-agent provably fetches only `lines`, never the attachment bodies. But the
+**How to read this honestly.** Halo cuts *per-result* context by 85–98%. But the
 *end-to-end token count* in this runtime does **not** drop — it rises ~22–35% —
-for two compounding reasons: (1) the cached prefix (CLAUDE.md + four Skills + the
-13 tool schemas ≈ 480 K cache-read tokens) dwarfs any single claim, so the bytes
+for two compounding reasons: (1) the cached prefix (CLAUDE.md + Skills + the
+tool schemas ≈ 480 K cache-read tokens) dwarfs any single claim, so the bytes
 Halo saves are noise against it; and (2) the Claude Code CLI already spills large
 tool results to scratch files on its own (note `baseline_big` ≈ `baseline`), so
 Halo's encode hook is competing with built-in handling while adding navigation
@@ -283,38 +324,51 @@ PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer
 
 ### The same A/B on the raw Claude API — where Halo wins
 
-`scripts/run_raw_api.py` runs the identical claim on a hand-built tool-use loop
-over `anthropic.messages.create` (no Agent SDK, no CLI). Here the runtime does
-**not** spill large tool results and the prefix is small (just the system prompt +
-13 tool schemas), so the bytes Halo keeps out of context are bytes the baseline
-actually re-sends every turn. Measured on `claude-sonnet-4-6`, real API calls:
+`scripts/run_raw_api_trace.py` runs the identical claim on a hand-built tool-use
+loop over `anthropic.messages.create` (no Agent SDK, no CLI), through the published
+`halo_format_claude.raw` adapter. Here the runtime does **not** spill large tool
+results and the prefix is small, so the bytes Halo keeps out of context are bytes
+the baseline actually re-sends every turn.
 
-| `get_claim` | Arm | total tokens | cache_read | **cost** | turns | halo_fetch |
-|-------------|-----|-------------:|-----------:|---------:|------:|-----------:|
-| ~12 KB (8 attach.)  | baseline | 104,245 | 64,797 | $0.2099 | 10 | 0 |
-| ~12 KB              | **halo** | 89,569 | 56,757 | **$0.1888** | 11 | 1 |
-| ~56 KB (40 attach.) | baseline | 250,100 | 169,496 | $0.3919 | 11 | 0 |
-| ~56 KB              | **halo** | 94,409 | 60,797 | **$0.2055** | 10 | 1 |
+With the **normalized tools**, `payer_get_claim` is small (a manifest); the large
+results are the **attachment bodies** the agent fetches for documentation review.
+Both arms fetch the *same* bodies — Halo slices each to `narrative`+`findings` and
+skips the raw `image_b64`. Measured on `claude-sonnet-4-6`, real API calls (single
+runs; a live agent is non-deterministic):
 
-**The win scales with payload, opposite to the Claude Code runtime.** On the raw
-API Halo cuts **−14% tokens / −10% cost** on the small claim and **−62% tokens /
-−48% cost** on the large one. The reason is stark in the numbers: the baseline
-balloons from 104 K → 250 K tokens as the claim grows (it re-reads the 56 KB body
-every turn), while the **halo arm stays flat at ~90–94 K regardless of payload
-size** — it fetches only `lines` and never the attachment bulk, so claim size
-barely moves its bill. The bigger and heavier the claim, the more Halo saves.
+| Claim | bodies opened | Arm | total tokens | **cost** | bytes in context |
+|-------|:-------------:|-----|-------------:|---------:|-----------------:|
+| CLM-PROF (exam + cleaning + filling) | 1 | baseline | 320,272 | $0.5936 | 48,032 B |
+| | | **halo** | 141,322 | **$0.3164** | **1,580 B** |
+| CLM-BIG (exam + 2 crowns, 14 attach.) | 2–3 | baseline | 678,445 | $0.8528 | 82,568 B |
+| | | **halo** | 150,085 | **$0.2640** | **2,822 B** |
+
+**The win scales with the bodies the agent opens.** Halo cuts **−56% tokens /
+−47% cost** on the small claim (one supporting attachment) and **−78% tokens /
+−69% cost** on the large one (several). The reason is stark: a baseline that opens
+an attachment body re-sends its raw image bytes every turn, so its bill balloons
+with the documentation it reviews; the **halo arm pulls only the narrative/findings
+it reads** (and the manifest keeps the un-reviewed attachments out entirely), so it
+stays lean regardless. The result is **honest** — nothing is force-fed to the
+baseline; both arms fetch the same bodies, and Halo simply navigates within them.
+
+> Note: the attachment fetch folds into the claim's own map under `argJoin`
+> (`<CLM>.payer_get_attachment.narrative`) — the entity-accumulation property, made
+> literal: one growing map per claim rather than a fragment per call.
 
 ```bash
 set -a && . ./.env && set +a            # ANTHROPIC_API_KEY + DB DSN
-HALO=0 RUN_LABEL=raw_baseline python -m scripts.run_raw_api CLM-PROF
-HALO=1 RUN_LABEL=raw_halo     python -m scripts.run_raw_api CLM-PROF
-PROFILE_ATTACHMENTS=40 python -m db.seed.seed_payer   # then re-run for the big-payload row
+python -m scripts.reviewer_console auto &        # CLM-BIG hits the review gate
+HALO=0 python -m scripts.run_raw_api_trace CLM-BIG
+HALO=1 python -m scripts.run_raw_api_trace CLM-BIG
+BIG_ATTACHMENTS=30 python -m db.seed.seed_payer  # widen the gap with more/larger bodies
 ```
 
 **Bottom line across both runtimes:** on Claude Code, the host already spills large
 results and the prefix is heavy, so adopt Halo there for the verifiable-evidence
 property, not token savings. On the raw Claude API, Halo is a real and growing cost
-saver — ~10% on a light claim, ~48% on a heavy one — *and* you still get the
+saver — **−47% on a light claim, −69% on a documentation-heavy one** — and the win
+scales with the attachment bodies the agent opens, *and* you still get the
 tamper-evident evidence trail.
 
 ## Layout
@@ -325,14 +379,14 @@ agent/                      Claude Agent SDK runtime
   prompts.py                system prompt + model/prompt provenance hash (shared by both runtimes)
 .claude/skills/             Skills the SDK loads (intake/coverage/adjudicate/explain[/halo])
 mcp_servers/mimic_payer/
-  server.py                 the 13 MCP tools
+  server.py                 the MCP tools (incl. get_claim manifest + get_attachment bodies)
   engine.py                 the deterministic adjudication engine (no LLM)
   models.py                 Pydantic tool contracts
   db.py                     asyncpg pool (least-privilege agent role)
 db/                         ext + agent schemas, role/grants, seed
 scripts/                    init_db.sh, run_demo.py, reviewer_console.py,
                             run_token_ab.sh, profile_ab.py (with/without-Halo A/B),
-                            run_raw_api.py (raw Claude Messages API runtime)
+                            run_raw_api.py + run_raw_api_trace.py (raw Messages API runtime)
 ```
 
 ## The swap to real systems, later

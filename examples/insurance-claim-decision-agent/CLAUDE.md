@@ -25,11 +25,23 @@ the project Skills — **intake-and-validate**, **coverage-and-rules**,
 ## Flow for every claim
 
 1. **Intake & validate** — `payer_get_claim` (header + lines + diagnosis +
-   attachment refs), `payer_get_member_coverage` (eligibility, effective dates,
-   plan), `payer_check_network` for the claim's provider. Confirm the member is
-   active and the service dates fall within coverage, and that each line has the
-   data it needs. **Missing required data pends with CARC 16** rather than
-   guessing — this is the clean-claim gate.
+   attachment **manifest** — references and metadata, not the bodies),
+   `payer_get_member_coverage` (eligibility, effective dates, plan),
+   `payer_check_network` for the claim's provider. Confirm the member is active
+   and the service dates fall within coverage, and that each line has the data it
+   needs. **Missing required data pends with CARC 16** rather than guessing — this
+   is the clean-claim gate.
+   - The claim's `attachments` is a manifest: each entry has a `ref`, `kind`,
+     `image_bytes`, and `documents_line`. Do **not** pull attachment bodies here.
+   - **Documentation review (only when a line needs it):** a line for a major
+     restorative, endodontic, periodontal, or oral-surgery procedure must be checked
+     against its supporting clinical attachment. For each such line, find the manifest
+     entry whose `documents_line` is that line and call
+     `payer_get_attachment(claim_id, attachment_ref)`; read its `narrative` and
+     `findings` to confirm the documentation supports the procedure. **Never read
+     `image_b64`** — it is raw pixels, large and not human-readable. Routine
+     preventive/basic lines (exams, cleanings, single-surface fillings) need no
+     attachment, so do not fetch one.
 2. **Coverage & rules** — for the codes on this claim (not the whole plan):
    `payer_get_benefit_rules`, `payer_get_allowed_amount`, `payer_get_accumulators`
    (plan year = the service year), and `payer_get_claim_history` for frequency /

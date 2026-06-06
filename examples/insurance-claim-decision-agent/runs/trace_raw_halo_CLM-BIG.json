@@ -1,0 +1,2021 @@
+{
+  "meta": {
+    "runtime": "raw_messages_api",
+    "model": "claude-sonnet-4-6",
+    "claim_id": "CLM-BIG",
+    "halo_enabled": true,
+    "halo_threshold_bytes": 2048,
+    "adapter": "halo_format_claude.raw.create_raw_halo",
+    "alg": "sha256",
+    "system_prompt_chars": 6631,
+    "tool_count": 16
+  },
+  "turns": [
+    {
+      "index": 1,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 401,
+        "output_tokens": 118,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 3598
+      },
+      "assistant_text": [
+        "I'll adjudicate claim CLM-BIG end-to-end. Let me start by gathering all the foundational data in parallel."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01D2vWB8LMHr385qcH7cd5GV",
+          "name": "payer_get_claim",
+          "input": {
+            "claim_id": "CLM-BIG"
+          }
+        },
+        {
+          "id": "toolu_01MDe5yTvZtwjMQqpsLTXj25",
+          "name": "payer_get_agent_provenance",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 632,
+        "output_tokens": 132,
+        "cache_read_input_tokens": 3598,
+        "cache_creation_input_tokens": 431
+      },
+      "assistant_text": [
+        "Good. I have the provenance hash. Now let me fetch the claim lines, member ID, and provider in full detail."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_018cAuCsfi89kapJPRVSriTU",
+          "name": "halo_fetch",
+          "input": {
+            "refs": [
+              "CLM-BIG.lines",
+              "CLM-BIG.attachments",
+              "CLM-BIG.member_id",
+              "CLM-BIG.provider_id",
+              "CLM-BIG.diagnosis_codes"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2205,
+        "output_tokens": 411,
+        "cache_read_input_tokens": 3598,
+        "cache_creation_input_tokens": 431
+      },
+      "assistant_text": [
+        "I have the claim details. Three lines:\n- **Line 1**: D0120 (periodic oral exam) \u2014 $65\n- **Line 2**: D2740 (crown, porcelain/ceramic \u2014 tooth 3) \u2014 $1,000\n- **Line 3**: D2750 (crown, porcelain fused to high noble metal \u2014 tooth 19) \u2014 $1,000\n\nLines 2 and 3 are major restorative (crowns) requiring documentation review. Let me now run all parallel intake checks AND fetch the clinical attachments for lines 2 & 3 simultaneously."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01EUswzhVUQFmrBYZ9ioyBm8",
+          "name": "payer_get_member_coverage",
+          "input": {
+            "member_id": "MBR-PROF"
+          }
+        },
+        {
+          "id": "toolu_01EVGoS7PEKAjehCnYHjQ3zb",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLN-PREMIUM"
+          }
+        },
+        {
+          "id": "toolu_013esL3Y1jLmpSPEkBKHdb21",
+          "name": "payer_get_attachment",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-01"
+          }
+        },
+        {
+          "id": "toolu_01W5wbApTHHk7EUejvYQaS5Y",
+          "name": "payer_get_attachment",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-02"
+          }
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2726,
+        "output_tokens": 709,
+        "cache_read_input_tokens": 4083,
+        "cache_creation_input_tokens": 604
+      },
+      "assistant_text": [
+        "The network check used the wrong plan ID \u2014 I need to re-check with the correct plan `PLAN-DENTAL-PPO`. Also fetching attachment narrative/findings for both, and the benefit rules/accumulators/history in parallel."
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01KRAanGLd3Dm1FsHcPXBSTy",
+          "name": "payer_check_network",
+          "input": {
+            "provider_id": "PRV-1001",
+            "plan_id": "PLAN-DENTAL-PPO"
+          }
+        },
+        {
+          "id": "toolu_01FvAuK3bWRPmWWq57QXxxmV",
+          "name": "payer_get_benefit_rules",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D2740",
+              "D2750"
+            ]
+          }
+        },
+        {
+          "id": "toolu_01TR7vfCPeFLA6H2wp9ZEc2k",
+          "name": "payer_get_allowed_amount",
+          "input": {
+            "plan_id": "PLAN-DENTAL-PPO",
+            "procedure_codes": [
+              "D0120",
+              "D2740",
+              "D2750"
+            ]
+          }
+        },
+        {
+          "id": "toolu_01EkWVLD5En3TJJApw1GWdd4",
+          "name": "payer_get_accumulators",
+          "input": {
+            "member_id": "MBR-PROF",
+            "plan_year": 2026
+          }
+        },
+        {
+          "id": "toolu_013xajzgGYhounK3cznrWi71",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D0120",
+            "window_days": 365
+          }
+        },
+        {
+          "id": "toolu_01PYx6b3tRZmgVi5gfVQKq7R",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D2740",
+            "window_days": 1825
+          }
+        },
+        {
+          "id": "toolu_01CmK9yFbUsmYeAun7YCyfC8",
+          "name": "payer_get_claim_history",
+          "input": {
+            "member_id": "MBR-PROF",
+            "procedure_code": "D2750",
+            "window_days": 1825
+          }
+        },
+        {
+          "id": "toolu_011VNbMT6aeukKoWmEkNAmmh",
+          "name": "halo_fetch",
+          "input": {
+            "refs": [
+              "CLM-BIG.payer_get_attachment.narrative",
+              "CLM-BIG.payer_get_attachment.findings"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2120,
+        "output_tokens": 398,
+        "cache_read_input_tokens": 4793,
+        "cache_creation_input_tokens": 2672
+      },
+      "assistant_text": [
+        "The halo_fetch returned only one attachment's data (the last one fetched overwrites). I need to specifically fetch the ATT-BIG-02 attachment for Line 3. Let me now review key findings so far:\n\n**Intake Assessment:**\n- \u2705 Member MBR-PROF is **active** on plan PLAN-DENTAL-PPO (effective 2021-01-01, no term date)\n- \u2705 Provider PRV-1001 is **in-network**\n- \u2705 Service date 2026-05-18 is within coverage\n- \u2705 Deductible fully met ($50/$50)\n- \u2705 Annual max used: $0 of $1,500 total\n- **Line 1 (D0120)**: History shows a second D0120 on CLM-PROF (2026-04-10, pending) \u2014 potential frequency issue (limit: 2/year). Need to watch.\n- **Line 2 (D2740)**: ATT-BIG-01 narrative/findings look supportive. No prior D2740 history other than this claim.\n- **Line 3 (D2750)**: Need to fetch ATT-BIG-02 findings separately.\n\nLet me fetch the ATT-BIG-02 attachment for line 3:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01KFdmpnVEvGWxqGWvQkVEuX",
+          "name": "payer_get_attachment",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-02"
+          }
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 306,
+        "output_tokens": 103,
+        "cache_read_input_tokens": 7545,
+        "cache_creation_input_tokens": 2350
+      },
+      "assistant_text": [],
+      "tool_uses": [
+        {
+          "id": "toolu_01T2xEsqLHXteYk3MX4pfZoy",
+          "name": "halo_fetch",
+          "input": {
+            "refs": [
+              "CLM-BIG.payer_get_attachment.narrative",
+              "CLM-BIG.payer_get_attachment.findings",
+              "CLM-BIG.payer_get_attachment.attachment_ref"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 618,
+        "output_tokens": 671,
+        "cache_read_input_tokens": 7545,
+        "cache_creation_input_tokens": 2350
+      },
+      "assistant_text": [
+        "ATT-BIG-02 (for Line 3, D2750 on tooth 19) confirms: *\"Radiograph supports the proposed restoration; margins intact, no periapical pathology.\"* \u2014 documentation is supportive.\n\n**Documentation Review Summary:**\n- **Line 2 (D2740, tooth 3)** \u2014 ATT-BIG-01: Supported \u2705\n- **Line 3 (D2750, tooth 19)** \u2014 ATT-BIG-02: Supported \u2705\n\n**Coverage & Rules Analysis:**\n\n| Line | Code | Category | Covered | Cov% | Freq | Waiting | Pre-auth | Annual Max Remaining |\n|------|------|----------|---------|------|------|---------|----------|---------------------|\n| 1 | D0120 | Preventive | \u2705 | 100% | 2/yr | 0 mo | No | $1,500 |\n| 2 | D2740 | Major | \u2705 | 50% | 1/5yr | 12 mo | No | $1,500 |\n| 3 | D2750 | Major | \u2705 | 50% | 1/5yr | 12 mo | No | $1,500 |\n\n- Deductible met, effective date 2021-01-01 \u2192 waiting period satisfied for all lines (>12 months)\n- D0120 history: This claim + CLM-PROF pending = 2 within the year \u2192 at the limit but not over (CLM-PROF is still pending, not paid)\n- No prior D2740 or D2750 in the 5-year window \u2014 frequency OK\n- Annual max: $0 used, claim totals ~$1,565 plan liability \u2192 may hit $1,500 annual max \u2014 the engine will compute this precisely\n\nNow let me run the deterministic engine on all three lines in parallel:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01C1baAnk6HUAydCqgcoxqDd",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 1
+          }
+        },
+        {
+          "id": "toolu_01C1pgvh9u8YTkG83F7rmQqb",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 2
+          }
+        },
+        {
+          "id": "toolu_017k5HSysvDQTiQBUbnqxByx",
+          "name": "payer_adjudicate_line",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "line_number": 3
+          }
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2233,
+        "output_tokens": 101,
+        "cache_read_input_tokens": 9983,
+        "cache_creation_input_tokens": 321
+      },
+      "assistant_text": [
+        "Excellent! Engine results are clean \u2014 no `review_required` flags on any line. Let me now confirm the reason codes for lines 2 & 3 (CARC 2):"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01Xx54N8ZzAGDsBhTkio4KND",
+          "name": "payer_lookup_reason_code",
+          "input": {
+            "code": "2"
+          }
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1706,
+        "output_tokens": 1889,
+        "cache_read_input_tokens": 10200,
+        "cache_creation_input_tokens": 768
+      },
+      "assistant_text": [
+        "**Engine Results Summary:**\n\n| Line | Code | Decision | Allowed | Plan Pays | Patient Resp | CARC | review_required |\n|------|------|----------|---------|-----------|-------------|------|-----------------|\n| 1 | D0120 | **PAY** | $65.00 | $65.00 | $0.00 | \u2014 | \u274c |\n| 2 | D2740 | **PAY** | $1,000.00 | $500.00 | $500.00 | CARC 2 (Coinsurance) | \u274c |\n| 3 | D2750 | **PAY** | $1,000.00 | $500.00 | $500.00 | CARC 2 (Coinsurance) | \u274c |\n\nAll three lines are payable. Total plan pays: $1,065.00 \u2014 within the $1,500 annual max. Now let me record the decisions:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01N9SRQyqtGeYJSYRwmTBvZH",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": "Preventive D0120; 100% covered, in-network, deductible met, within 2/year frequency limit, no waiting period. Documentation: routine exam, no attachment required.",
+                "evidence": {
+                  "line": "h:08b22badc644f2a3a65e55e3359bab5968f044de16d1bddd3c5ae233f90697e1",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D2740",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": "Major restorative D2740 crown tooth #3; 50% coinsurance (plan pays 50%), in-network, deductible met, waiting period satisfied (effective 2021), no prior D2740 in 5-year window, no preauth required. ATT-BIG-01 documents medical necessity: 'Radiograph supports the proposed restoration; margins intact, no periapical pathology.'",
+                "evidence": {
+                  "line": "h:3b208e750725cacf94b6726c872e7ab04338a537eb936a2b47953eac8425f037",
+                  "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c713e9688b0b343723bbbe5bf22c553f3aa3f",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2750",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": "Major restorative D2750 crown tooth #19; 50% coinsurance (plan pays 50%), in-network, deductible met, waiting period satisfied (effective 2021), no prior D2750 in 5-year window, no preauth required. ATT-BIG-02 documents medical necessity: 'Radiograph supports the proposed restoration; margins intact, no periapical pathology.'",
+                "evidence": {
+                  "line": "h:a733d25b5f1ec51b91d89b99f448496bbceb64b925098eb5d64168c6bf8c1d3c",
+                  "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2104,
+        "output_tokens": 1509,
+        "cache_read_input_tokens": 11043,
+        "cache_creation_input_tokens": 1536
+      },
+      "assistant_text": [
+        "`rule_basis` must be a list. Let me resubmit with the correct format:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01NCoqtCFVYJxgYKtMvqN4Mi",
+          "name": "payer_record_decision",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "model_version": "claude-sonnet-4-6",
+            "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+            "lines": [
+              {
+                "line_number": 1,
+                "procedure_code": "D0120",
+                "decision": "pay",
+                "allowed_cents": 6500,
+                "plan_paid_cents": 6500,
+                "patient_resp_cents": 0,
+                "deductible_cents": 0,
+                "coinsurance_cents": 0,
+                "carc": [],
+                "rarc": [],
+                "rule_basis": [
+                  "Preventive D0120; 100% covered in-network",
+                  "Deductible met; within 2/year frequency limit",
+                  "No waiting period; routine exam, no attachment required"
+                ],
+                "evidence": {
+                  "line": "h:08b22badc644f2a3a65e55e3359bab5968f044de16d1bddd3c5ae233f90697e1",
+                  "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 2,
+                "procedure_code": "D2740",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "Major restorative D2740 crown tooth #3; 50% coinsurance applies",
+                  "In-network; deductible met; waiting period satisfied (effective 2021-01-01)",
+                  "No prior D2740 in 5-year window; no preauth required",
+                  "ATT-BIG-01: radiograph supports restoration, margins intact, no periapical pathology"
+                ],
+                "evidence": {
+                  "line": "h:3b208e750725cacf94b6726c872e7ab04338a537eb936a2b47953eac8425f037",
+                  "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c553f3aa3f",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              },
+              {
+                "line_number": 3,
+                "procedure_code": "D2750",
+                "decision": "pay",
+                "allowed_cents": 100000,
+                "plan_paid_cents": 50000,
+                "patient_resp_cents": 50000,
+                "deductible_cents": 0,
+                "coinsurance_cents": 50000,
+                "carc": [
+                  {
+                    "code": "2",
+                    "group": "PR"
+                  }
+                ],
+                "rarc": [],
+                "rule_basis": [
+                  "Major restorative D2750 crown tooth #19; 50% coinsurance applies",
+                  "In-network; deductible met; waiting period satisfied (effective 2021-01-01)",
+                  "No prior D2750 in 5-year window; no preauth required",
+                  "ATT-BIG-02: radiograph supports restoration, margins intact, no periapical pathology"
+                ],
+                "evidence": {
+                  "line": "h:a733d25b5f1ec51b91d89b99f448496bbceb64b925098eb5d64168c6bf8c1d3c",
+                  "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+                  "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+                  "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+                  "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+                  "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 3378,
+        "output_tokens": 420,
+        "cache_read_input_tokens": 12638,
+        "cache_creation_input_tokens": 272
+      },
+      "assistant_text": [
+        "All 3 lines recorded. `requires_human: true` \u2014 reason: `above_ceiling` (total claim value exceeds the auto-finalize ceiling). A human examiner must review before we can post. Opening the review gate now:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01EzsVa1H4u6uD1kpuXyya1B",
+          "name": "payer_request_review",
+          "input": {
+            "claim_id": "CLM-BIG",
+            "summary": "CLM-BIG (MBR-PROF / Sam Profile) \u2014 3-line dental claim, $2,065 total charged. All 3 lines adjudicated as PAY by deterministic engine. Human review required: claim exceeds auto-finalize ceiling ($2,065 total). LINE 1: D0120 periodic exam \u2014 pay $65.00 / patient $0 (100% preventive, in-network, frequency OK). LINE 2: D2740 porcelain crown tooth #3 \u2014 plan pays $500.00 / patient $500.00 (50% major coinsurance; ATT-BIG-01 supports medical necessity). LINE 3: D2750 PFM crown tooth #19 \u2014 plan pays $500.00 / patient $500.00 (50% major coinsurance; ATT-BIG-02 supports medical necessity). Total plan liability: $1,065.00. Annual max remaining after this claim: $435.00 of $1,500. No denials, reductions, or pends proposed; all rules satisfied.",
+            "reviewer_role": "claims_examiner",
+            "reason": "above_ceiling"
+          }
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2167,
+        "output_tokens": 112,
+        "cache_read_input_tokens": 14427,
+        "cache_creation_input_tokens": 277
+      },
+      "assistant_text": [
+        "Examiner **ex-204-rkhan** has **confirmed** the proposed adjudication (`status: confirmed`, no line overrides). The proposed decisions stand exactly as submitted. Now posting the final adjudication:"
+      ],
+      "tool_uses": [
+        {
+          "id": "toolu_01NjpYxHPpGyCtamDW9FDcPu",
+          "name": "payer_post_adjudication",
+          "input": {
+            "claim_id": "CLM-BIG"
+          }
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "stop_reason": "end_turn",
+      "usage": {
+        "input_tokens": 822,
+        "output_tokens": 691,
+        "cache_read_input_tokens": 16192,
+        "cache_creation_input_tokens": 148
+      },
+      "assistant_text": [
+        "Claim CLM-BIG is fully adjudicated and posted to `ext.claim_lines`. All 3 lines committed. \u2705\n\n---\n\n## CLM-BIG \u2014 Final EOB Summary\n\n**Member:** Sam Profile (MBR-PROF) | **Plan:** Acme Dental PPO (PLAN-DENTAL-PPO) | **Provider:** PRV-1001 (In-Network) | **DOS:** 2026-05-18 | **Examiner Confirmed:** ex-204-rkhan\n\n| Line | Code | Description | Charged | Allowed | Plan Pays | Patient Owes | Decision | Basis |\n|------|------|-------------|---------|---------|-----------|-------------|----------|-------|\n| 1 | D0120 | Periodic oral exam | $65.00 | $65.00 | **$65.00** | $0.00 | \u2705 **PAY** | 100% preventive; in-network; deductible met; within 2/yr frequency |\n| 2 | D2740 | Crown, porcelain/ceramic \u2014 tooth #3 | $1,000.00 | $1,000.00 | **$500.00** | $500.00 | \u2705 **PAY** | 50% major coinsurance (CARC 2); waiting period met; no prior crown in 5 yrs; ATT-BIG-01 supports medical necessity |\n| 3 | D2750 | Crown, PFM \u2014 tooth #19 | $1,000.00 | $1,000.00 | **$500.00** | $500.00 | \u2705 **PAY** | 50% major coinsurance (CARC 2); waiting period met; no prior crown in 5 yrs; ATT-BIG-02 supports medical necessity |\n| | | **TOTALS** | **$2,065.00** | **$2,065.00** | **$1,065.00** | **$1,000.00** | | |\n\n**One-line per-line summary:**\n- **Line 1 \u2014 D0120 \u2014 PAY:** $65.00 to plan, $0 patient; 100% preventive benefit, in-network, deductible satisfied, frequency within limit.\n- **Line 2 \u2014 D2740 \u2014 PAY:** $500.00 to plan, $500.00 patient coinsurance (CARC 2); major restorative at 50%, tooth #3, medically necessary per ATT-BIG-01, no frequency conflict.\n- **Line 3 \u2014 D2750 \u2014 PAY:** $500.00 to plan, $500.00 patient coinsurance (CARC 2); major restorative at 50%, tooth #19, medically necessary per ATT-BIG-02, no frequency conflict."
+      ],
+      "tool_uses": []
+    }
+  ],
+  "tool_results": [
+    {
+      "turn": 1,
+      "tool": "payer_get_claim",
+      "args": {
+        "claim_id": "CLM-BIG"
+      },
+      "full_bytes": 3411,
+      "encoded": true,
+      "large": true,
+      "in_context_bytes": 926,
+      "map_id": "CLM-BIG",
+      "shape_map_model_saw": "[halo] map \"CLM-BIG\" \u2014 object, 11 fields from payer_get_claim, stored out of context. Pull only the fields you need with ONE halo_fetch call \u2014 batch every ref into that one call; each call is a round trip. A [branch] ref expands to its sub-refs when fetched; every other ref returns its value.\nFields:\n  CLM-BIG.attachments  array[14]  [{\"captured_at\":\"2026-01-16\",\"documents_line\":2,\"image_bytes\":20480,\"kind\":\"pan\u2026\n  CLM-BIG.claim_number  string[6]  \"CN-BIG\"\n  CLM-BIG.date_received  string[10]  \"2026-06-01\"\n  CLM-BIG.diagnosis_codes  array[2]  [\"K02.9\",\"K04.0\"]\n  CLM-BIG.id  string[7]  \"CLM-BIG\"\n  CLM-BIG.lines  array[3]  [{\"allowed_cents\":6500,\"carc\":\"[]\",\"charged_cents\":6500,\"claim_id\":\"CLM-BIG\",\"d\u2026\n  CLM-BIG.member_id  string[8]  \"MBR-PROF\"\n  CLM-BIG.place_of_service  string[2]  \"11\"\n  CLM-BIG.provider_id  string[8]  \"PRV-1001\"\n  CLM-BIG.status  string[6]  \"pended\"\n  CLM-BIG.total_charged_cents  number  = 206500",
+      "shape_map_bytes": 926,
+      "reduction_pct": 72.9,
+      "bytes_kept_out_of_context": 2485,
+      "envelope": {
+        "halo": "1",
+        "alg": "sha256",
+        "root": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5",
+        "source": {
+          "id": "CLM-BIG",
+          "tool": "payer_get_claim",
+          "args": {
+            "claim_id": "CLM-BIG"
+          },
+          "ts": "2026-06-06T16:49:16.135682+00:00"
+        },
+        "view": {
+          "summary": "11 branches: attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachments": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+            "claim_number": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+            "id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "lines": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+            "total_charged_cents": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462"
+          }
+        }
+      },
+      "nodes": [
+        {
+          "handle": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5",
+          "depth": 0,
+          "stored_bytes": 1098,
+          "verified": true,
+          "kind": "branch",
+          "summary": "11 branches: attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachments": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+            "claim_number": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+            "id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "lines": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+            "total_charged_cents": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462"
+          }
+        },
+        {
+          "handle": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+          "depth": 1,
+          "stored_bytes": 1924,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 2073,
+          "value_preview": "[{\"captured_at\": \"2026-01-16\", \"documents_line\": 2, \"image_bytes\": 20480, \"kind\": \"panoramic_xray\", \"modality\": \"intraoral\", \"ref\": \"ATT-BIG-01\"}, {\"captured_at\": \"2026-04-10\", \"documents_line\": 3, \"image_bytes\": 36864, \"kind\": \"bitewing_x\u2026"
+        },
+        {
+          "handle": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+          "depth": 1,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "CN-BIG"
+        },
+        {
+          "handle": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+          "depth": 1,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-06-01"
+        },
+        {
+          "handle": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+          "depth": 1,
+          "stored_bytes": 35,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 18,
+          "value_preview": "[\"K02.9\", \"K04.0\"]"
+        },
+        {
+          "handle": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+          "depth": 1,
+          "stored_bytes": 27,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 9,
+          "value_preview": "CLM-BIG"
+        },
+        {
+          "handle": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+          "depth": 1,
+          "stored_bytes": 991,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 1068,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-BIG\", \"date_of_service\": \"2026-05-18\", \"id\": \"CLB-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_cod\u2026"
+        },
+        {
+          "handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "depth": 1,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF"
+        },
+        {
+          "handle": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+          "depth": 1,
+          "stored_bytes": 22,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 4,
+          "value_preview": "11"
+        },
+        {
+          "handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "depth": 1,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001"
+        },
+        {
+          "handle": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+          "depth": 1,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "pended"
+        },
+        {
+          "handle": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462",
+          "depth": 1,
+          "stored_bytes": 24,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 6,
+          "value_preview": "206500"
+        }
+      ],
+      "node_count": 12,
+      "all_nodes_verified": true,
+      "store_bytes_total": 4259
+    },
+    {
+      "turn": 1,
+      "tool": "payer_get_agent_provenance",
+      "args": {},
+      "full_bytes": 208,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 208
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_member_coverage",
+      "args": {
+        "member_id": "MBR-PROF"
+      },
+      "full_bytes": 446,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 446
+    },
+    {
+      "turn": 3,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLN-PREMIUM"
+      },
+      "full_bytes": 92,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 92
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_attachment",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "attachment_ref": "ATT-BIG-01"
+      },
+      "full_bytes": 28681,
+      "encoded": true,
+      "large": true,
+      "in_context_bytes": 632,
+      "map_id": "CLM-BIG",
+      "shape_map_model_saw": "[halo] map \"CLM-BIG\" \u2014 object, 2 fields from payer_get_attachment, stored out of context. Pull only the fields you need with ONE halo_fetch call \u2014 batch every ref into that one call; each call is a round trip. A [branch] ref expands to its sub-refs when fetched; every other ref returns its value.\nFields:\n  CLM-BIG.payer_get_attachment  [branch] object{9}  \u21b3 attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart\n  CLM-BIG.payer_get_claim  [branch] object{11}  \u21b3 attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, \u2026",
+      "shape_map_bytes": 632,
+      "reduction_pct": 97.8,
+      "bytes_kept_out_of_context": 28049,
+      "envelope": {
+        "halo": "1",
+        "alg": "sha256",
+        "root": "h:40495f0a1bc403117db75603fea7371421b67daa449bc3806030a980377a043c",
+        "source": {
+          "id": "CLM-BIG",
+          "tool": "payer_get_attachment",
+          "args": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-01"
+          },
+          "ts": "2026-06-06T16:49:26.514360+00:00"
+        },
+        "view": {
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:85e66284f0666fc7718c9070424c4f76d2e529fc1f55c8a022ee6f983b672d66",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        }
+      },
+      "nodes": [
+        {
+          "handle": "h:40495f0a1bc403117db75603fea7371421b67daa449bc3806030a980377a043c",
+          "depth": 0,
+          "stored_bytes": 263,
+          "verified": true,
+          "kind": "branch",
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:85e66284f0666fc7718c9070424c4f76d2e529fc1f55c8a022ee6f983b672d66",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        },
+        {
+          "handle": "h:85e66284f0666fc7718c9070424c4f76d2e529fc1f55c8a022ee6f983b672d66",
+          "depth": 1,
+          "stored_bytes": 879,
+          "verified": true,
+          "kind": "branch",
+          "summary": "9 branches: attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart",
+          "branches": {
+            "attachment_ref": "h:3932914653d5590ecfaf50589f54696c4b97a34ec82a765a51684747d6bf9475",
+            "captured_at": "h:edcc7adeb33a40068c3211f838e1a97bfaaaa5f58bf0668caa90718bde4e1b5e",
+            "claim_id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "findings": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+            "image_b64": "h:c11ce811880ef05598a572a2b7676abd519df3faad8d54eab7846b17e3450d0a",
+            "image_meta": "h:9a9c2e6f3ab87905374749180223a409c15bfbe69d025778d23242b23b8fa7e4",
+            "kind": "h:74c2c6e3767955574f70c8e76e6e33c7a76c5962dd944a505c8e6e557a83b96a",
+            "narrative": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+            "tooth_chart": "h:740ee9ba091f5719c7673a2363e0df7d3ec3aecff14ae363571dae1de2b367dc"
+          }
+        },
+        {
+          "handle": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5",
+          "depth": 1,
+          "stored_bytes": 1098,
+          "verified": true,
+          "kind": "branch",
+          "summary": "11 branches: attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachments": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+            "claim_number": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+            "id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "lines": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+            "total_charged_cents": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462"
+          }
+        },
+        {
+          "handle": "h:3932914653d5590ecfaf50589f54696c4b97a34ec82a765a51684747d6bf9475",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "ATT-BIG-01"
+        },
+        {
+          "handle": "h:edcc7adeb33a40068c3211f838e1a97bfaaaa5f58bf0668caa90718bde4e1b5e",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-01-16"
+        },
+        {
+          "handle": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+          "depth": 2,
+          "stored_bytes": 27,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 9,
+          "value_preview": "CLM-BIG"
+        },
+        {
+          "handle": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+          "depth": 2,
+          "stored_bytes": 106,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 88,
+          "value_preview": "Radiograph supports the proposed restoration; margins intact, no periapical pathology."
+        },
+        {
+          "handle": "h:c11ce811880ef05598a572a2b7676abd519df3faad8d54eab7846b17e3450d0a",
+          "depth": 2,
+          "stored_bytes": 27328,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 27310,
+          "value_preview": "ycz8dx8/8vdgCmpDZ1vBONmQWdXDojbKX/6mXJwm/ULJzPx3Hz/y92AKakNnW8E42ZBZ1cOiNspf/qZcnCb9QsnM/HcfP/L3YApqQ2dbwTjZkFnVw6I2yl/+plycJv1Cycz8dx8/8vdgCmpDZ1vBONmQWdXDojbKX/6mXJwm/ULJzPx3Hz/y92AKakNnW8E42ZBZ1cOiNspf/qZcnCb9QsnM/HcfP/L3YApqQ2dbwTjZkFn\u2026"
+        },
+        {
+          "handle": "h:9a9c2e6f3ab87905374749180223a409c15bfbe69d025778d23242b23b8fa7e4",
+          "depth": 2,
+          "stored_bytes": 66,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 53,
+          "value_preview": "{\"bytes\": 20480, \"dpi\": 300, \"modality\": \"intraoral\"}"
+        },
+        {
+          "handle": "h:74c2c6e3767955574f70c8e76e6e33c7a76c5962dd944a505c8e6e557a83b96a",
+          "depth": 2,
+          "stored_bytes": 34,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 16,
+          "value_preview": "panoramic_xray"
+        },
+        {
+          "handle": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+          "depth": 2,
+          "stored_bytes": 549,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 531,
+          "value_preview": "Patient presents for evaluation. Intraoral examination performed; findings documented per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment plan discussed with the patient and informed consent obtained. N\u2026"
+        },
+        {
+          "handle": "h:740ee9ba091f5719c7673a2363e0df7d3ec3aecff14ae363571dae1de2b367dc",
+          "depth": 2,
+          "stored_bytes": 467,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 512,
+          "value_preview": "{\"1\": \"missing\", \"10\": \"caries\", \"11\": \"caries\", \"12\": \"sound\", \"13\": \"restored\", \"14\": \"caries\", \"15\": \"restored\", \"16\": \"restored\", \"17\": \"restored\", \"18\": \"sound\", \"19\": \"caries\", \"2\": \"sound\", \"20\": \"caries\", \"21\": \"caries\", \"22\": \"sou\u2026"
+        },
+        {
+          "handle": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+          "depth": 2,
+          "stored_bytes": 1924,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 2073,
+          "value_preview": "[{\"captured_at\": \"2026-01-16\", \"documents_line\": 2, \"image_bytes\": 20480, \"kind\": \"panoramic_xray\", \"modality\": \"intraoral\", \"ref\": \"ATT-BIG-01\"}, {\"captured_at\": \"2026-04-10\", \"documents_line\": 3, \"image_bytes\": 36864, \"kind\": \"bitewing_x\u2026"
+        },
+        {
+          "handle": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "CN-BIG"
+        },
+        {
+          "handle": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-06-01"
+        },
+        {
+          "handle": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+          "depth": 2,
+          "stored_bytes": 35,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 18,
+          "value_preview": "[\"K02.9\", \"K04.0\"]"
+        },
+        {
+          "handle": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+          "depth": 2,
+          "stored_bytes": 991,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 1068,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-BIG\", \"date_of_service\": \"2026-05-18\", \"id\": \"CLB-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_cod\u2026"
+        },
+        {
+          "handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF"
+        },
+        {
+          "handle": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+          "depth": 2,
+          "stored_bytes": 22,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 4,
+          "value_preview": "11"
+        },
+        {
+          "handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001"
+        },
+        {
+          "handle": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "pended"
+        },
+        {
+          "handle": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462",
+          "depth": 2,
+          "stored_bytes": 24,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 6,
+          "value_preview": "206500"
+        }
+      ],
+      "node_count": 22,
+      "all_nodes_verified": true,
+      "store_bytes_total": 34011
+    },
+    {
+      "turn": 3,
+      "tool": "payer_get_attachment",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "attachment_ref": "ATT-BIG-02"
+      },
+      "full_bytes": 50537,
+      "encoded": true,
+      "large": true,
+      "in_context_bytes": 632,
+      "map_id": "CLM-BIG",
+      "shape_map_model_saw": "[halo] map \"CLM-BIG\" \u2014 object, 2 fields from payer_get_attachment, stored out of context. Pull only the fields you need with ONE halo_fetch call \u2014 batch every ref into that one call; each call is a round trip. A [branch] ref expands to its sub-refs when fetched; every other ref returns its value.\nFields:\n  CLM-BIG.payer_get_attachment  [branch] object{9}  \u21b3 attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart\n  CLM-BIG.payer_get_claim  [branch] object{11}  \u21b3 attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, \u2026",
+      "shape_map_bytes": 632,
+      "reduction_pct": 98.7,
+      "bytes_kept_out_of_context": 49905,
+      "envelope": {
+        "halo": "1",
+        "alg": "sha256",
+        "root": "h:258e658bc5b1c562308ab219ad230f06867c02d008232eaa247b6fcffbb9b0b2",
+        "source": {
+          "id": "CLM-BIG",
+          "tool": "payer_get_attachment",
+          "args": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-02"
+          },
+          "ts": "2026-06-06T16:49:26.521567+00:00"
+        },
+        "view": {
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        }
+      },
+      "nodes": [
+        {
+          "handle": "h:258e658bc5b1c562308ab219ad230f06867c02d008232eaa247b6fcffbb9b0b2",
+          "depth": 0,
+          "stored_bytes": 263,
+          "verified": true,
+          "kind": "branch",
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        },
+        {
+          "handle": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+          "depth": 1,
+          "stored_bytes": 879,
+          "verified": true,
+          "kind": "branch",
+          "summary": "9 branches: attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart",
+          "branches": {
+            "attachment_ref": "h:3dc59b5a9590a4ccca5c319749462e3605608ab8fbb059593ec9f01480de66e6",
+            "captured_at": "h:2a1c1110801ce8452acc968c40c4ef680914d1ebf4975effc0fbe9380b188591",
+            "claim_id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "findings": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+            "image_b64": "h:8fca5f011682652c8cca32360efe867e5ea0b336d43659262ab47545097a27cb",
+            "image_meta": "h:6319e16905d6972db1e03d34280e725017c7e7c3deb6c1863d819bc441bd8d54",
+            "kind": "h:af4cf4140c4f0bf232b1af7556b9667074432284f0ff67a9fbe402f4c465b570",
+            "narrative": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+            "tooth_chart": "h:e083cde754240ade2dfe1277c3cf706bd8dc012999d0929b67328abca0ff6366"
+          }
+        },
+        {
+          "handle": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5",
+          "depth": 1,
+          "stored_bytes": 1098,
+          "verified": true,
+          "kind": "branch",
+          "summary": "11 branches: attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachments": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+            "claim_number": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+            "id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "lines": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+            "total_charged_cents": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462"
+          }
+        },
+        {
+          "handle": "h:3dc59b5a9590a4ccca5c319749462e3605608ab8fbb059593ec9f01480de66e6",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "ATT-BIG-02"
+        },
+        {
+          "handle": "h:2a1c1110801ce8452acc968c40c4ef680914d1ebf4975effc0fbe9380b188591",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-04-10"
+        },
+        {
+          "handle": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+          "depth": 2,
+          "stored_bytes": 27,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 9,
+          "value_preview": "CLM-BIG"
+        },
+        {
+          "handle": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+          "depth": 2,
+          "stored_bytes": 106,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 88,
+          "value_preview": "Radiograph supports the proposed restoration; margins intact, no periapical pathology."
+        },
+        {
+          "handle": "h:8fca5f011682652c8cca32360efe867e5ea0b336d43659262ab47545097a27cb",
+          "depth": 2,
+          "stored_bytes": 49172,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 49154,
+          "value_preview": "tg8Jj+ncbgzKg5ag77zzWImPm0/vPcMF7Dhi20Z2tu+2DwmP6dxuDMqDlqDvvPNYiY+bT+89wwXsOGLbRna277YPCY/p3G4MyoOWoO+881iJj5tP7z3DBew4YttGdrbvtg8Jj+ncbgzKg5ag77zzWImPm0/vPcMF7Dhi20Z2tu+2DwmP6dxuDMqDlqDvvPNYiY+bT+89wwXsOGLbRna277YPCY/p3G4MyoOWoO+881iJj5t\u2026"
+        },
+        {
+          "handle": "h:6319e16905d6972db1e03d34280e725017c7e7c3deb6c1863d819bc441bd8d54",
+          "depth": 2,
+          "stored_bytes": 66,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 53,
+          "value_preview": "{\"bytes\": 36864, \"dpi\": 300, \"modality\": \"intraoral\"}"
+        },
+        {
+          "handle": "h:af4cf4140c4f0bf232b1af7556b9667074432284f0ff67a9fbe402f4c465b570",
+          "depth": 2,
+          "stored_bytes": 33,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 15,
+          "value_preview": "bitewing_xray"
+        },
+        {
+          "handle": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+          "depth": 2,
+          "stored_bytes": 549,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 531,
+          "value_preview": "Patient presents for evaluation. Intraoral examination performed; findings documented per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment plan discussed with the patient and informed consent obtained. N\u2026"
+        },
+        {
+          "handle": "h:e083cde754240ade2dfe1277c3cf706bd8dc012999d0929b67328abca0ff6366",
+          "depth": 2,
+          "stored_bytes": 480,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 525,
+          "value_preview": "{\"1\": \"restored\", \"10\": \"restored\", \"11\": \"missing\", \"12\": \"caries\", \"13\": \"missing\", \"14\": \"sound\", \"15\": \"restored\", \"16\": \"caries\", \"17\": \"caries\", \"18\": \"missing\", \"19\": \"missing\", \"2\": \"sound\", \"20\": \"restored\", \"21\": \"caries\", \"22\": \u2026"
+        },
+        {
+          "handle": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+          "depth": 2,
+          "stored_bytes": 1924,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 2073,
+          "value_preview": "[{\"captured_at\": \"2026-01-16\", \"documents_line\": 2, \"image_bytes\": 20480, \"kind\": \"panoramic_xray\", \"modality\": \"intraoral\", \"ref\": \"ATT-BIG-01\"}, {\"captured_at\": \"2026-04-10\", \"documents_line\": 3, \"image_bytes\": 36864, \"kind\": \"bitewing_x\u2026"
+        },
+        {
+          "handle": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "CN-BIG"
+        },
+        {
+          "handle": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-06-01"
+        },
+        {
+          "handle": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+          "depth": 2,
+          "stored_bytes": 35,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 18,
+          "value_preview": "[\"K02.9\", \"K04.0\"]"
+        },
+        {
+          "handle": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+          "depth": 2,
+          "stored_bytes": 991,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 1068,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-BIG\", \"date_of_service\": \"2026-05-18\", \"id\": \"CLB-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_cod\u2026"
+        },
+        {
+          "handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF"
+        },
+        {
+          "handle": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+          "depth": 2,
+          "stored_bytes": 22,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 4,
+          "value_preview": "11"
+        },
+        {
+          "handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001"
+        },
+        {
+          "handle": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "pended"
+        },
+        {
+          "handle": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462",
+          "depth": 2,
+          "stored_bytes": 24,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 6,
+          "value_preview": "206500"
+        }
+      ],
+      "node_count": 22,
+      "all_nodes_verified": true,
+      "store_bytes_total": 55867
+    },
+    {
+      "turn": 4,
+      "tool": "payer_check_network",
+      "args": {
+        "provider_id": "PRV-1001",
+        "plan_id": "PLAN-DENTAL-PPO"
+      },
+      "full_bytes": 94,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 94
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_benefit_rules",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D2740",
+          "D2750"
+        ]
+      },
+      "full_bytes": 687,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 687
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_allowed_amount",
+      "args": {
+        "plan_id": "PLAN-DENTAL-PPO",
+        "procedure_codes": [
+          "D0120",
+          "D2740",
+          "D2750"
+        ]
+      },
+      "full_bytes": 92,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 92
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_accumulators",
+      "args": {
+        "member_id": "MBR-PROF",
+        "plan_year": 2026
+      },
+      "full_bytes": 125,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 125
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D0120",
+        "window_days": 365
+      },
+      "full_bytes": 722,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 722
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D2740",
+        "window_days": 1825
+      },
+      "full_bytes": 423,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 423
+    },
+    {
+      "turn": 4,
+      "tool": "payer_get_claim_history",
+      "args": {
+        "member_id": "MBR-PROF",
+        "procedure_code": "D2750",
+        "window_days": 1825
+      },
+      "full_bytes": 419,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 419
+    },
+    {
+      "turn": 5,
+      "tool": "payer_get_attachment",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "attachment_ref": "ATT-BIG-02"
+      },
+      "full_bytes": 50537,
+      "encoded": true,
+      "large": true,
+      "in_context_bytes": 632,
+      "map_id": "CLM-BIG",
+      "shape_map_model_saw": "[halo] map \"CLM-BIG\" \u2014 object, 2 fields from payer_get_attachment, stored out of context. Pull only the fields you need with ONE halo_fetch call \u2014 batch every ref into that one call; each call is a round trip. A [branch] ref expands to its sub-refs when fetched; every other ref returns its value.\nFields:\n  CLM-BIG.payer_get_attachment  [branch] object{9}  \u21b3 attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart\n  CLM-BIG.payer_get_claim  [branch] object{11}  \u21b3 attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, \u2026",
+      "shape_map_bytes": 632,
+      "reduction_pct": 98.7,
+      "bytes_kept_out_of_context": 49905,
+      "envelope": {
+        "halo": "1",
+        "alg": "sha256",
+        "root": "h:258e658bc5b1c562308ab219ad230f06867c02d008232eaa247b6fcffbb9b0b2",
+        "source": {
+          "id": "CLM-BIG",
+          "tool": "payer_get_attachment",
+          "args": {
+            "claim_id": "CLM-BIG",
+            "attachment_ref": "ATT-BIG-02"
+          },
+          "ts": "2026-06-06T16:49:43.609346+00:00"
+        },
+        "view": {
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        }
+      },
+      "nodes": [
+        {
+          "handle": "h:258e658bc5b1c562308ab219ad230f06867c02d008232eaa247b6fcffbb9b0b2",
+          "depth": 0,
+          "stored_bytes": 263,
+          "verified": true,
+          "kind": "branch",
+          "summary": "2 branches: payer_get_attachment, payer_get_claim",
+          "branches": {
+            "payer_get_attachment": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+            "payer_get_claim": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5"
+          }
+        },
+        {
+          "handle": "h:f64416d6f05851a3ff4e76fe2b0b4bfc762ae44098e636d42515fd78c72d6242",
+          "depth": 1,
+          "stored_bytes": 879,
+          "verified": true,
+          "kind": "branch",
+          "summary": "9 branches: attachment_ref, captured_at, claim_id, findings, image_b64, image_meta, kind, narrative, tooth_chart",
+          "branches": {
+            "attachment_ref": "h:3dc59b5a9590a4ccca5c319749462e3605608ab8fbb059593ec9f01480de66e6",
+            "captured_at": "h:2a1c1110801ce8452acc968c40c4ef680914d1ebf4975effc0fbe9380b188591",
+            "claim_id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "findings": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+            "image_b64": "h:8fca5f011682652c8cca32360efe867e5ea0b336d43659262ab47545097a27cb",
+            "image_meta": "h:6319e16905d6972db1e03d34280e725017c7e7c3deb6c1863d819bc441bd8d54",
+            "kind": "h:af4cf4140c4f0bf232b1af7556b9667074432284f0ff67a9fbe402f4c465b570",
+            "narrative": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+            "tooth_chart": "h:e083cde754240ade2dfe1277c3cf706bd8dc012999d0929b67328abca0ff6366"
+          }
+        },
+        {
+          "handle": "h:41a7cd8f3dd0bf646a1aee6aa782eede7283d8c61116a9fb865bdfcb956711d5",
+          "depth": 1,
+          "stored_bytes": 1098,
+          "verified": true,
+          "kind": "branch",
+          "summary": "11 branches: attachments, claim_number, date_received, diagnosis_codes, id, lines, member_id, place_of_service, provider_id, status, total_charged_cents",
+          "branches": {
+            "attachments": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+            "claim_number": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+            "date_received": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+            "diagnosis_codes": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+            "id": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+            "lines": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+            "member_id": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+            "place_of_service": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+            "provider_id": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+            "status": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+            "total_charged_cents": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462"
+          }
+        },
+        {
+          "handle": "h:3dc59b5a9590a4ccca5c319749462e3605608ab8fbb059593ec9f01480de66e6",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "ATT-BIG-02"
+        },
+        {
+          "handle": "h:2a1c1110801ce8452acc968c40c4ef680914d1ebf4975effc0fbe9380b188591",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-04-10"
+        },
+        {
+          "handle": "h:1816eb849520e83598c0fbbefab74ef35c0de85f51c3fd9f3f923d0eedfa8276",
+          "depth": 2,
+          "stored_bytes": 27,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 9,
+          "value_preview": "CLM-BIG"
+        },
+        {
+          "handle": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+          "depth": 2,
+          "stored_bytes": 106,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 88,
+          "value_preview": "Radiograph supports the proposed restoration; margins intact, no periapical pathology."
+        },
+        {
+          "handle": "h:8fca5f011682652c8cca32360efe867e5ea0b336d43659262ab47545097a27cb",
+          "depth": 2,
+          "stored_bytes": 49172,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 49154,
+          "value_preview": "tg8Jj+ncbgzKg5ag77zzWImPm0/vPcMF7Dhi20Z2tu+2DwmP6dxuDMqDlqDvvPNYiY+bT+89wwXsOGLbRna277YPCY/p3G4MyoOWoO+881iJj5tP7z3DBew4YttGdrbvtg8Jj+ncbgzKg5ag77zzWImPm0/vPcMF7Dhi20Z2tu+2DwmP6dxuDMqDlqDvvPNYiY+bT+89wwXsOGLbRna277YPCY/p3G4MyoOWoO+881iJj5t\u2026"
+        },
+        {
+          "handle": "h:6319e16905d6972db1e03d34280e725017c7e7c3deb6c1863d819bc441bd8d54",
+          "depth": 2,
+          "stored_bytes": 66,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 53,
+          "value_preview": "{\"bytes\": 36864, \"dpi\": 300, \"modality\": \"intraoral\"}"
+        },
+        {
+          "handle": "h:af4cf4140c4f0bf232b1af7556b9667074432284f0ff67a9fbe402f4c465b570",
+          "depth": 2,
+          "stored_bytes": 33,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 15,
+          "value_preview": "bitewing_xray"
+        },
+        {
+          "handle": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+          "depth": 2,
+          "stored_bytes": 549,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 531,
+          "value_preview": "Patient presents for evaluation. Intraoral examination performed; findings documented per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment plan discussed with the patient and informed consent obtained. N\u2026"
+        },
+        {
+          "handle": "h:e083cde754240ade2dfe1277c3cf706bd8dc012999d0929b67328abca0ff6366",
+          "depth": 2,
+          "stored_bytes": 480,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 525,
+          "value_preview": "{\"1\": \"restored\", \"10\": \"restored\", \"11\": \"missing\", \"12\": \"caries\", \"13\": \"missing\", \"14\": \"sound\", \"15\": \"restored\", \"16\": \"caries\", \"17\": \"caries\", \"18\": \"missing\", \"19\": \"missing\", \"2\": \"sound\", \"20\": \"restored\", \"21\": \"caries\", \"22\": \u2026"
+        },
+        {
+          "handle": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+          "depth": 2,
+          "stored_bytes": 1924,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 2073,
+          "value_preview": "[{\"captured_at\": \"2026-01-16\", \"documents_line\": 2, \"image_bytes\": 20480, \"kind\": \"panoramic_xray\", \"modality\": \"intraoral\", \"ref\": \"ATT-BIG-01\"}, {\"captured_at\": \"2026-04-10\", \"documents_line\": 3, \"image_bytes\": 36864, \"kind\": \"bitewing_x\u2026"
+        },
+        {
+          "handle": "h:547970b079f932358097755e3fa8318f25330c3dba0e76bde5858a041e7da31c",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "CN-BIG"
+        },
+        {
+          "handle": "h:8ed46f78a3b4525ad09e74baafb2010fa06cf4c4040be2ae982f4daff2bbb1e9",
+          "depth": 2,
+          "stored_bytes": 30,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "2026-06-01"
+        },
+        {
+          "handle": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+          "depth": 2,
+          "stored_bytes": 35,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 18,
+          "value_preview": "[\"K02.9\", \"K04.0\"]"
+        },
+        {
+          "handle": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+          "depth": 2,
+          "stored_bytes": 991,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 1068,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-BIG\", \"date_of_service\": \"2026-05-18\", \"id\": \"CLB-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_cod\u2026"
+        },
+        {
+          "handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF"
+        },
+        {
+          "handle": "h:25443f153a5956d53748b6ce723cd7be82ba711c9d7f37da569d5cd3a0c54ca8",
+          "depth": 2,
+          "stored_bytes": 22,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 4,
+          "value_preview": "11"
+        },
+        {
+          "handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "depth": 2,
+          "stored_bytes": 28,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001"
+        },
+        {
+          "handle": "h:13eeebe0695244bd58db615ef99f530105aeafe58a0e406a5834d4270c64704e",
+          "depth": 2,
+          "stored_bytes": 26,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 8,
+          "value_preview": "pended"
+        },
+        {
+          "handle": "h:530d9995d8429b9e20b3dce374669f8728613c28f073ff91338de33de12e1462",
+          "depth": 2,
+          "stored_bytes": 24,
+          "verified": true,
+          "kind": "leaf",
+          "value_bytes": 6,
+          "value_preview": "206500"
+        }
+      ],
+      "node_count": 22,
+      "all_nodes_verified": true,
+      "store_bytes_total": 55867
+    },
+    {
+      "turn": 7,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 1
+      },
+      "full_bytes": 863,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 863
+    },
+    {
+      "turn": 7,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 2
+      },
+      "full_bytes": 902,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 902
+    },
+    {
+      "turn": 7,
+      "tool": "payer_adjudicate_line",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "line_number": 3
+      },
+      "full_bytes": 902,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 902
+    },
+    {
+      "turn": 8,
+      "tool": "payer_lookup_reason_code",
+      "args": {
+        "code": "2"
+      },
+      "full_bytes": 66,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 66
+    },
+    {
+      "turn": 10,
+      "tool": "payer_record_decision",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "model_version": "claude-sonnet-4-6",
+        "prompt_version_hash": "sha256:f1e895033ba4279eb779ec13217f7928932a388f0cf39e9edc0264b73a5cdee8",
+        "lines": [
+          {
+            "line_number": 1,
+            "procedure_code": "D0120",
+            "decision": "pay",
+            "allowed_cents": 6500,
+            "plan_paid_cents": 6500,
+            "patient_resp_cents": 0,
+            "deductible_cents": 0,
+            "coinsurance_cents": 0,
+            "carc": [],
+            "rarc": [],
+            "rule_basis": [
+              "Preventive D0120; 100% covered in-network",
+              "Deductible met; within 2/year frequency limit",
+              "No waiting period; routine exam, no attachment required"
+            ],
+            "evidence": {
+              "line": "h:08b22badc644f2a3a65e55e3359bab5968f044de16d1bddd3c5ae233f90697e1",
+              "benefit_rule": "h:316151a793b37b254a32321afb100a7015e0fcd00d01a7cc9df34f898c2f8cca",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:2c8f0df7fa46439adf48a8d379c763e49ffafd03a530f421d1b0235465401eae",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 2,
+            "procedure_code": "D2740",
+            "decision": "pay",
+            "allowed_cents": 100000,
+            "plan_paid_cents": 50000,
+            "patient_resp_cents": 50000,
+            "deductible_cents": 0,
+            "coinsurance_cents": 50000,
+            "carc": [
+              {
+                "code": "2",
+                "group": "PR"
+              }
+            ],
+            "rarc": [],
+            "rule_basis": [
+              "Major restorative D2740 crown tooth #3; 50% coinsurance applies",
+              "In-network; deductible met; waiting period satisfied (effective 2021-01-01)",
+              "No prior D2740 in 5-year window; no preauth required",
+              "ATT-BIG-01: radiograph supports restoration, margins intact, no periapical pathology"
+            ],
+            "evidence": {
+              "line": "h:3b208e750725cacf94b6726c872e7ab04338a537eb936a2b47953eac8425f037",
+              "benefit_rule": "h:eba8ef14f3dffe0e3e0a8cb6f18c553f3aa3f",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:397cf2506ff962745dc2719d5e2741db22373124610e98232449b1e6e0c69437",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          },
+          {
+            "line_number": 3,
+            "procedure_code": "D2750",
+            "decision": "pay",
+            "allowed_cents": 100000,
+            "plan_paid_cents": 50000,
+            "patient_resp_cents": 50000,
+            "deductible_cents": 0,
+            "coinsurance_cents": 50000,
+            "carc": [
+              {
+                "code": "2",
+                "group": "PR"
+              }
+            ],
+            "rarc": [],
+            "rule_basis": [
+              "Major restorative D2750 crown tooth #19; 50% coinsurance applies",
+              "In-network; deductible met; waiting period satisfied (effective 2021-01-01)",
+              "No prior D2750 in 5-year window; no preauth required",
+              "ATT-BIG-02: radiograph supports restoration, margins intact, no periapical pathology"
+            ],
+            "evidence": {
+              "line": "h:a733d25b5f1ec51b91d89b99f448496bbceb64b925098eb5d64168c6bf8c1d3c",
+              "benefit_rule": "h:d32efc24822ac87d634d1ce2929a0738acfa89af872dbf46c48ea2b8995fce1d",
+              "accumulators": "h:8a078f6854e01c885dad005e7ddea4cc45a5e482ae0bf4877c083f1556c3bbdf",
+              "fee_schedule": "h:0ff48d1208e80d4cf9358c9a34f860b9d7385c35a80a427e7efba6589dff011a",
+              "network": "h:5bce29ad700bd88bd74191ee8ae2dceb33c5b0521bb0b699817082334c88ba18",
+              "plan_benefit": "h:b32d357abf0bd01298a84da5e5002d54431dc67e75145f5e49555ed59192973b"
+            }
+          }
+        ]
+      },
+      "full_bytes": 227,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 227
+    },
+    {
+      "turn": 11,
+      "tool": "payer_request_review",
+      "args": {
+        "claim_id": "CLM-BIG",
+        "summary": "CLM-BIG (MBR-PROF / Sam Profile) \u2014 3-line dental claim, $2,065 total charged. All 3 lines adjudicated as PAY by deterministic engine. Human review required: claim exceeds auto-finalize ceiling ($2,065 total). LINE 1: D0120 periodic exam \u2014 pay $65.00 / patient $0 (100% preventive, in-network, frequency OK). LINE 2: D2740 porcelain crown tooth #3 \u2014 plan pays $500.00 / patient $500.00 (50% major coinsurance; ATT-BIG-01 supports medical necessity). LINE 3: D2750 PFM crown tooth #19 \u2014 plan pays $500.00 / patient $500.00 (50% major coinsurance; ATT-BIG-02 supports medical necessity). Total plan liability: $1,065.00. Annual max remaining after this claim: $435.00 of $1,500. No denials, reductions, or pends proposed; all rules satisfied.",
+        "reviewer_role": "claims_examiner",
+        "reason": "above_ceiling"
+      },
+      "full_bytes": 422,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 422
+    },
+    {
+      "turn": 12,
+      "tool": "payer_post_adjudication",
+      "args": {
+        "claim_id": "CLM-BIG"
+      },
+      "full_bytes": 427,
+      "encoded": false,
+      "large": false,
+      "in_context_bytes": 427
+    }
+  ],
+  "fetches": [
+    {
+      "turn": 2,
+      "refs": [
+        "CLM-BIG.lines",
+        "CLM-BIG.attachments",
+        "CLM-BIG.member_id",
+        "CLM-BIG.provider_id",
+        "CLM-BIG.diagnosis_codes"
+      ],
+      "results": [
+        {
+          "ref": "CLM-BIG.lines",
+          "resolved_handle": "h:086cce6735e654abed0d377f83cd5c0e7c4c343594a93ebdfc5a1bc6daf07a98",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 1068,
+          "value_preview": "[{\"allowed_cents\": 6500, \"carc\": \"[]\", \"charged_cents\": 6500, \"claim_id\": \"CLM-BIG\", \"date_of_service\": \"2026-05-18\", \"id\": \"CLB-1\", \"line_number\": 1, \"patient_resp_cents\": 0, \"plan_paid_cents\": 6500, \"preauth_number\": null, \"procedure_cod\u2026",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.attachments",
+          "resolved_handle": "h:2e2c32a59662744a071afb3cda89fb303d83fe38f67eb132aa0ac1dc81e969a4",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 2073,
+          "value_preview": "[{\"captured_at\": \"2026-01-16\", \"documents_line\": 2, \"image_bytes\": 20480, \"kind\": \"panoramic_xray\", \"modality\": \"intraoral\", \"ref\": \"ATT-BIG-01\"}, {\"captured_at\": \"2026-04-10\", \"documents_line\": 3, \"image_bytes\": 36864, \"kind\": \"bitewing_x\u2026",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.member_id",
+          "resolved_handle": "h:d048994759a44b25f89545835bf713fbd4ccd0dd98b3e046d65ec6768d4fadcf",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "MBR-PROF",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.provider_id",
+          "resolved_handle": "h:bb1079d52b7be78ed024b4ed177249b37c24627d7c88a118b56f4d0e920605b8",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 10,
+          "value_preview": "PRV-1001",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.diagnosis_codes",
+          "resolved_handle": "h:ffbd59e989cefa47c50bf55efd6ee40a73aa9beebaebe566e490a1de19739062",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 18,
+          "value_preview": "[\"K02.9\", \"K04.0\"]",
+          "reverified": true
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "refs": [
+        "CLM-BIG.payer_get_attachment.narrative",
+        "CLM-BIG.payer_get_attachment.findings"
+      ],
+      "results": [
+        {
+          "ref": "CLM-BIG.payer_get_attachment.narrative",
+          "resolved_handle": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 531,
+          "value_preview": "Patient presents for evaluation. Intraoral examination performed; findings documented per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment plan discussed with the patient and informed consent obtained. N\u2026",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.payer_get_attachment.findings",
+          "resolved_handle": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 88,
+          "value_preview": "Radiograph supports the proposed restoration; margins intact, no periapical pathology.",
+          "reverified": true
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "refs": [
+        "CLM-BIG.payer_get_attachment.narrative",
+        "CLM-BIG.payer_get_attachment.findings",
+        "CLM-BIG.payer_get_attachment.attachment_ref"
+      ],
+      "results": [
+        {
+          "ref": "CLM-BIG.payer_get_attachment.narrative",
+          "resolved_handle": "h:d21186ac0cde2782184e823de7699765ec662e5efb89759e367937231b4083e1",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 531,
+          "value_preview": "Patient presents for evaluation. Intraoral examination performed; findings documented per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment plan discussed with the patient and informed consent obtained. N\u2026",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.payer_get_attachment.findings",
+          "resolved_handle": "h:28a20c402ecacba242364d94af2202fcb39addc360a711e9032642971814a227",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 88,
+          "value_preview": "Radiograph supports the proposed restoration; margins intact, no periapical pathology.",
+          "reverified": true
+        },
+        {
+          "ref": "CLM-BIG.payer_get_attachment.attachment_ref",
+          "resolved_handle": "h:3dc59b5a9590a4ccca5c319749462e3605608ab8fbb059593ec9f01480de66e6",
+          "ok": true,
+          "kind": "leaf",
+          "value_bytes": 12,
+          "value_preview": "ATT-BIG-02",
+          "reverified": true
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "label": "raw_halo_CLM-BIG",
+    "halo_enabled": true,
+    "tokens": {
+      "input_tokens": 21418,
+      "output_tokens": 7264,
+      "cache_read_input_tokens": 105645,
+      "cache_creation_input_tokens": 15758
+    },
+    "total_tokens": 150085,
+    "estimated_cost_usd": 0.264,
+    "turns": 13,
+    "tool_calls": {
+      "payer_get_claim": 1,
+      "payer_get_agent_provenance": 1,
+      "halo_fetch": 3,
+      "payer_get_member_coverage": 1,
+      "payer_check_network": 2,
+      "payer_get_attachment": 3,
+      "payer_get_benefit_rules": 1,
+      "payer_get_allowed_amount": 1,
+      "payer_get_accumulators": 1,
+      "payer_get_claim_history": 3,
+      "payer_adjudicate_line": 3,
+      "payer_lookup_reason_code": 1,
+      "payer_record_decision": 2,
+      "payer_request_review": 1,
+      "payer_post_adjudication": 1
+    },
+    "halo_fetch_calls": 3,
+    "halo_maps": 1,
+    "encoded_results": 4,
+    "large_results": 4,
+    "bytes_full_total": 133166,
+    "bytes_in_context_total": 2822,
+    "bytes_kept_out_of_context": 130344,
+    "context_reduction_pct": 97.9
+  }
+}
