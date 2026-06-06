@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@halo-format/halo": "workspace:*",
-    "zod": "^3.25.0"
+    "zod": "^4.0.0"
   },
   "peerDependencies": {
     "@langchain/core": ">=1.0.0",
