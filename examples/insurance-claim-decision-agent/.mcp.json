@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mimic-payer": {
+      "command": "uv",
+      "args": ["run", "--quiet", "python", "-m", "mcp_servers.mimic_payer.server"],
+      "env": {
+        "MIMIC_DB_DSN": "${MIMIC_DB_DSN:-postgresql://payer_agent:agent_demo_pw@localhost:5433/mimic_payer}",
+        "APPROVAL_TIMEOUT_SECONDS": "${APPROVAL_TIMEOUT_SECONDS:-900}",
+        "APPROVAL_POLL_SECONDS": "${APPROVAL_POLL_SECONDS:-2}",
+        "AUTO_FINALIZE_MAX_CENTS": "${AUTO_FINALIZE_MAX_CENTS:-50000}"
+      }
+    }
+  }
+}

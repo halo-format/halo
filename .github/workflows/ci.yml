@@ -53,7 +53,10 @@ jobs:
           cache: pip
 
       - name: Install packages + test deps
-        run: pip install -e py/packages/halo -e py/packages/claude -e py/packages/langgraph pytest
+        # The claude adapter's Agent SDK dependency is an optional extra ([agent-sdk]); install it so
+        # the install_halo tests run (the raw Messages API path needs no extra). The langgraph adapter's
+        # [langgraph] extra pulls langgraph itself so the halo_tool_node StateGraph tests run.
+        run: pip install -e py/packages/halo -e "py/packages/claude[agent-sdk]" -e "py/packages/langgraph[langgraph]" pytest
 
       - name: Run tests + conformance vectors
         run: pytest py

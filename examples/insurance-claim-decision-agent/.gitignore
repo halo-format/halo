@@ -1,0 +1,14 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+out/
+*.egg-info/
+.pytest_cache/
+
+# Local run logs
+*.log
+*.jsonl
+
+# Local A/B benchmark output (token summaries written by agent/main.py)
+runs/
