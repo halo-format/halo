@@ -1,6 +1,6 @@
 {
   "name": "@halo-format/claude",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Halo adapter for Claude on two runtimes: the Agent SDK (installHalo — a PostToolUse encode hook + a single in-process halo_fetch MCP tool) and the raw Messages API (@halo-format/claude/raw — createRawHalo, no Agent SDK needed). Tool results become a shape map kept out of context.",
   "type": "module",
   "exports": {
