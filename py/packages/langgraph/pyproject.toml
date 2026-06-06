@@ -1,6 +1,6 @@
 [project]
 name = "halo-format-langgraph"
-version = "0.2.0"
+version = "0.3.0"
 description = "Halo host adapter for LangChain agents and LangGraph graphs (Python): a wrap_tool_call encode middleware plus a halo_fetch navigation tool. install_halo() wires it in one call."
 readme = "README.md"
 requires-python = ">=3.10"
