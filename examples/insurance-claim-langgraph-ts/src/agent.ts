@@ -8,10 +8,12 @@
 //   tsx src/agent.ts CLM-PROF            # adjudicate a claim end to end
 //   tsx src/agent.ts CLM-PROF --selftest # tool dispatch + engine, no API key
 //   HALO=1 tsx src/agent.ts CLM-PROF     # attach the Halo LangGraph adapter (A/B)
+//   CACHE=1 tsx src/agent.ts CLM-PROF    # turn on Anthropic prompt caching (both arms)
 //
 // By default tools return plain JSON. HALO=1 attaches the Halo LangGraph host adapter:
 // a wrapToolCall middleware encodes a large tool result (the on-demand attachment body)
 // into a content-addressed store and hands the model a shape map plus a halo_fetch tool.
+// CACHE=1 adds prompt caching (off by default in ChatAnthropic) — see src/caching.ts.
 // ============================================================================
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -30,9 +32,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUNS = join(__dirname, "..", "runs");
 const MAX_STEPS = Number(process.env.LG_RECURSION_LIMIT || "120");
 
-// ── Halo toggle ─────────────────────────────────────────────────────────────
+// ── Halo + cache toggles ──────────────────────────────────────────────────────
 const HALO_ENABLED = ["1", "true", "yes", "on"].includes((process.env.HALO || "").toLowerCase());
 const HALO_THRESHOLD = Number(process.env.HALO_THRESHOLD || "2048");
+// CACHE=1 turns on Anthropic prompt caching (ChatAnthropic does not by default). Applies to both the
+// baseline and Halo arms, so the A/B stays fair — see src/caching.ts.
+const CACHE_ENABLED = ["1", "true", "yes", "on"].includes((process.env.CACHE || "").toLowerCase());
 
 const HALO_GUIDANCE = `
 
@@ -67,14 +72,22 @@ async function buildAgent() {
   const { createAgent } = await import("langchain");
   const { ChatAnthropic } = await import("@langchain/anthropic");
   const model = new ChatAnthropic({ model: MODEL_VERSION, maxTokens: 8000 });
-  if (!HALO_ENABLED) return createAgent({ model, tools: TOOLS, systemPrompt: SYSTEM_PROMPT });
+
+  const middleware: any[] = [];
+  if (CACHE_ENABLED) {
+    const { promptCachingMiddleware } = await import("./caching.js");
+    middleware.push(promptCachingMiddleware);
+  }
+  if (!HALO_ENABLED) {
+    return createAgent({ model, tools: TOOLS, middleware, systemPrompt: SYSTEM_PROMPT });
+  }
 
   const { installHalo } = await import("@halo-format/langgraph");
   const installed = installHalo({ tools: TOOLS, threshold: HALO_THRESHOLD });
   return createAgent({
     model,
-    tools: installed.tools as typeof TOOLS,         // TOOLS + halo_fetch
-    middleware: installed.middleware as any,        // the wrapToolCall encode middleware
+    tools: installed.tools as typeof TOOLS,                  // TOOLS + halo_fetch
+    middleware: [...middleware, ...installed.middleware] as any,  // cache + wrapToolCall encode
     systemPrompt: SYSTEM_PROMPT + HALO_GUIDANCE,
   });
 }
@@ -99,11 +112,17 @@ async function run(claimId: string): Promise<void> {
   for (const msg of result.messages) {
     const um = msg.usage_metadata;
     if (um) {
-      usage.input_tokens = (usage.input_tokens || 0) + (um.input_tokens || 0);
-      usage.output_tokens = (usage.output_tokens || 0) + (um.output_tokens || 0);
       const det = um.input_token_details || {};
-      usage.cache_read = (usage.cache_read || 0) + (det.cache_read || 0);
-      usage.cache_creation = (usage.cache_creation || 0) + (det.cache_creation || 0);
+      const cr = det.cache_read || 0;
+      // cache WRITES land under ephemeral_*_input_tokens in this langchain-anthropic version, not
+      // cache_creation; fall back to those.
+      const cw = (det.cache_creation || 0) || ((det.ephemeral_5m_input_tokens || 0) + (det.ephemeral_1h_input_tokens || 0));
+      // langchain's input_tokens is the GRAND total (fresh + cache_read + cache_write); keep only the
+      // fresh (full-price) portion so the cost is not double-counted.
+      usage.input_tokens = (usage.input_tokens || 0) + Math.max(0, (um.input_tokens || 0) - cr - cw);
+      usage.output_tokens = (usage.output_tokens || 0) + (um.output_tokens || 0);
+      usage.cache_read = (usage.cache_read || 0) + cr;
+      usage.cache_creation = (usage.cache_creation || 0) + cw;
     }
     for (const tc of msg.tool_calls || []) tools[tc.name] = (tools[tc.name] || 0) + 1;
   }
@@ -111,7 +130,7 @@ async function run(claimId: string): Promise<void> {
   console.log(typeof last.content === "string" ? last.content : JSON.stringify(last.content));
 
   const total = Object.values(usage).reduce((a, b) => a + b, 0);
-  const summary = { label, runtime: "langgraph_ts", halo: HALO_ENABLED, model: MODEL_VERSION, tokens: usage, total_tokens: total,
+  const summary = { label, runtime: "langgraph_ts", halo: HALO_ENABLED, cache: CACHE_ENABLED, model: MODEL_VERSION, tokens: usage, total_tokens: total,
     estimated_cost_usd: cost(usage, MODEL_VERSION), tool_calls: tools, tool_call_total: Object.values(tools).reduce((a, b) => a + b, 0) };
   mkdirSync(RUNS, { recursive: true });
   writeFileSync(join(RUNS, `${label}.json`), JSON.stringify(summary, null, 2));

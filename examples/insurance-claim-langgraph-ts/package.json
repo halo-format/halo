@@ -8,6 +8,7 @@
     "initdb": "bash scripts/init_db.sh",
     "seed": "tsx db/seed.ts",
     "agent": "tsx src/agent.ts",
+    "ab": "tsx scripts/ab-big-payload.ts",
     "reviewer": "tsx src/reviewer-console.ts",
     "typecheck": "tsc --noEmit"
   },
