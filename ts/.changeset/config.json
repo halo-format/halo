@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@halo-format/halo", "@halo-format/claude", "@halo-format/langgraph"]],
+  "fixed": [["@halo-format/halo", "@halo-format/claude", "@halo-format/langgraph", "@halo-format/openai"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

@@ -1,0 +1,15 @@
+{
+  // Typecheck config: resolves @halo-format/halo to source and emits nothing, so `pnpm typecheck`
+  // (and the editor) work against the working tree with no build step. The build (tsconfig.json)
+  // resolves the package's published `dist` like a real consumer.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "types": ["node"],
+    "paths": {
+      "@halo-format/halo": ["../halo/src/index.ts"]
+    }
+  },
+  "include": ["src", "tests", "vitest.config.ts"]
+}

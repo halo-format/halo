@@ -1,0 +1,50 @@
+{
+  "name": "@halo-format/openai",
+  "version": "0.3.0",
+  "description": "Halo host adapter for the OpenAI Agents SDK: a call_model_input_filter that swaps large tool results for a shape map (out of context) plus a single halo_fetch navigation tool. installHalo() wires it in one call.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@halo-format/halo": "workspace:*"
+  },
+  "peerDependencies": {
+    "@openai/agents": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@openai/agents": "^0.1.0",
+    "vitest": "^1.5.0"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "halo",
+    "openai",
+    "openai-agents",
+    "ai-agents",
+    "tool-results",
+    "context"
+  ],
+  "homepage": "https://github.com/halo-format/halo/tree/main/ts/packages/openai#readme",
+  "bugs": "https://github.com/halo-format/halo/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/halo-format/halo.git",
+    "directory": "ts/packages/openai"
+  }
+}

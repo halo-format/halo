@@ -1,6 +1,6 @@
 name: Release
 
-# Changesets-driven release for all four packages on one shared version.
+# Changesets-driven release for every package on one shared version.
 #
 # Flow:
 #   1. Feature PRs land on main carrying a `.changeset/*.md` file (run `pnpm changeset`).
@@ -10,12 +10,12 @@ name: Release
 #      version not yet tagged, it publishes to npm and creates ONE `vX.Y.Z` git tag and a
 #      single GitHub release covering all packages.
 #
-# The two PyPI packages are published by separate, per-package workflows
-# (`publish-python-halo.yml` and `publish-python-claude.yml`). Each PyPI project only allows
-# one trusted publisher per (repo, workflow file, environment), so the two projects need two
-# distinct workflow files — they cannot share this one. Those workflows trigger automatically
-# off this one via `workflow_run` (a `push`/`release` trigger would NOT fire, because the tag
-# and release created here use GITHUB_TOKEN, which GitHub suppresses to prevent workflow loops).
+# The PyPI packages are published by separate, per-package workflows (`publish-python-halo.yml`,
+# `publish-python-claude.yml`, `publish-python-langgraph.yml`, `publish-python-openai.yml`). Each
+# PyPI project only allows one trusted publisher per (repo, workflow file, environment), so each
+# project needs its own workflow file — they cannot share this one. Those workflows trigger
+# automatically off this one via `workflow_run` (a `push`/`release` trigger would NOT fire, because
+# the tag and release created here use GITHUB_TOKEN, which GitHub suppresses to prevent workflow loops).
 #
 # Publishing is decoupled from the Changesets action on purpose: the action ONLY opens the
 # version PR here (its `published` output is unreliable once per-package git tags are
