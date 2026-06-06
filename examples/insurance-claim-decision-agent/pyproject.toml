@@ -14,7 +14,7 @@ dependencies = [
     # Published Halo packages (PyPI). The core also gives the MCP server byte-identical
     # content-addressed handles for the evidence record; the adapter powers the HALO=1 run.
     "halo-format>=0.1.1",
-    "halo-format-claude>=0.1.1",
+    "halo-format-claude>=0.2.0",
 ]
 
 [project.optional-dependencies]

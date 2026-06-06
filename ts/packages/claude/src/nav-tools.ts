@@ -18,7 +18,7 @@ import { z } from "zod";
 import { tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { HaloSession, FetchEntry } from "./session.js";
-import { HALO_MCP_SERVER, HALO_FETCH_TOOL } from "./constants.js";
+import { HALO_MCP_SERVER, HALO_FETCH_TOOL, HALO_FETCH_DESCRIPTION } from "./constants.js";
 
 /** Fetch several refs at once, verified, with a per-ref result; branch refs return their sub-shape. */
 export async function haloFetch(
@@ -32,13 +32,6 @@ function ok(value: unknown): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(value) }] };
 }
 
-const FETCH_DESC =
-  "The one tool for reading a halo map. Pass ALL the refs a step needs in one call (refs is an " +
-  "array) rather than one at a time — each call is a separate round trip. A ref like `m1.income` " +
-  "(or a raw `h:` handle) that points at a value returns it as `{ok:true,value}`; a ref that points " +
-  "at a [branch] returns `{ok:true,kind:'branch',fields:[…]}` listing its sub-refs to fetch next. " +
-  "An entry with `ok:false` (e.g. HashMismatch) means that data must not be trusted.";
-
 /** Build the in-process MCP server exposing the single halo_fetch tool over the given session. */
 export function createNavServer(session: HaloSession) {
   return createSdkMcpServer({
@@ -46,7 +39,7 @@ export function createNavServer(session: HaloSession) {
     tools: [
       tool(
         HALO_FETCH_TOOL,
-        FETCH_DESC,
+        HALO_FETCH_DESCRIPTION,
         { refs: z.array(z.string()).describe("The halo refs to fetch together in one call.") },
         async ({ refs }) => ok(await haloFetch(session, refs)),
       ),

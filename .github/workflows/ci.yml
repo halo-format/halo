@@ -53,7 +53,9 @@ jobs:
           cache: pip
 
       - name: Install packages + test deps
-        run: pip install -e py/packages/halo -e py/packages/claude pytest
+        # The adapter's Agent SDK dependency is an optional extra ([agent-sdk]); install it so the
+        # install_halo tests run. The raw Messages API path needs no extra.
+        run: pip install -e py/packages/halo -e "py/packages/claude[agent-sdk]" pytest
 
       - name: Run tests + conformance vectors
         run: pytest py

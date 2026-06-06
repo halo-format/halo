@@ -14,9 +14,10 @@ tools are the swap point, everything above them is portable.
 With ``HALO=1`` the Agent-SDK PostToolUse hook is replaced by an explicit encode
 step in this loop: a large tool result is encoded into a Halo store and the model
 receives the shape map instead of the payload, plus a ``halo_fetch`` tool to pull
-the fields it needs (verified on read) — the same ``HaloSession`` the published
-``halo-format-claude`` adapter uses, driven by hand here because the raw Messages
-API has no hook mechanism.
+the fields it needs (verified on read). That mechanism is the published adapter's
+raw-Messages-API surface (``halo_format_claude.raw.create_raw_halo``) — the same
+engine the Agent SDK path drives via a hook — so this script carries no Halo code
+of its own; the raw Messages API has no hook, so the loop drives it by hand.
 
 Requires ANTHROPIC_API_KEY and a seeded mimic_payer database. For a claim that
 hits the human-review gate, run ``python -m scripts.reviewer_console auto`` in a
@@ -80,45 +81,27 @@ TOOL_DEFS = [
 
 DISPATCH = {name: getattr(S, name) for name, _, _ in TOOL_DEFS}
 
-HALO_GUIDANCE = """
-
-## Halo: navigating large tool results
-
-Some tool results arrive as a *halo shape map* — a `[halo] map "<id>"` note with one line per field
-(ref, kind, bounded preview); the data is held, verified, in a store out of your context. Read the
-previews, then fetch ONLY the fields you still need in a single `halo_fetch` call, passing a list of
-refs like `["CLM-1001.lines"]`. For a claim, fetch the service `lines`; do NOT fetch the
-`attachment_bodies` bulk. Use fetched values as if returned inline.
-"""
-
-HALO_FETCH_DEF = (
-    "halo_fetch",
-    "Read a halo map. Pass ALL refs a step needs in one call (refs is a list). A ref like "
-    "'CLM-1001.lines' returns its value; a [branch] ref returns its sub-refs. ok=false means untrusted.",
-    _obj({"refs": _STRARR}, ["refs"]),
-)
+# A one-line domain hint appended to the package's generic navigation guidance.
+DOMAIN_HINT = "\nFor a claim, fetch the service `lines`; do NOT fetch the `attachment_bodies` bulk."
 
 
-def build_tools(halo: bool) -> list[dict]:
-    defs = list(TOOL_DEFS) + ([HALO_FETCH_DEF] if halo else [])
-    tools = [{"name": n, "description": d, "input_schema": s} for n, d, s in defs]
-    tools[-1]["cache_control"] = {"type": "ephemeral"}  # cache tools + system together
-    return tools
+def build_tools(halo_tool_def: dict | None) -> list[dict]:
+    defs = [{"name": n, "description": d, "input_schema": s} for n, d, s in TOOL_DEFS]
+    if halo_tool_def is not None:
+        defs.append(halo_tool_def)
+    defs[-1]["cache_control"] = {"type": "ephemeral"}  # cache tools + system together
+    return defs
 
 
-async def _execute(name: str, args: dict, session) -> str:
+async def _execute(name: str, args: dict, adapter) -> str:
     """Run one tool and return the tool_result text (Halo-encoded if large and halo is on)."""
-    if name == "halo_fetch":
+    if adapter is not None and adapter.is_fetch(name):
         # MANDATORY: never re-encode a fetched leaf, or the model never sees the value.
-        return json.dumps(session.fetch(args["refs"]))
+        return adapter.fetch(args["refs"])
     result = await DISPATCH[name](**args)
-    payload = json.dumps(result)
-    if session is not None and len(payload) >= HALO_THRESHOLD:
-        from halo_format_claude.serialize import serialize_envelope
-
-        res = session.ingest(name, args, result)
-        return serialize_envelope(res["envelope"], session.describe(res["envelope"]))
-    return payload
+    if adapter is not None:
+        return adapter.encode_result(name, args, result)
+    return json.dumps(result)
 
 
 def _cost(usage: dict, model: str) -> float | None:
@@ -141,15 +124,16 @@ async def run(claim_id: str) -> None:
     halo = HALO_ENABLED
     label = os.environ.get("RUN_LABEL", "raw_halo" if halo else "raw_baseline")
     client = anthropic.AsyncAnthropic()
-    session = None
+    adapter = None
     if halo:
-        from halo_format_claude.session import HaloSession
+        from halo_format_claude.raw import create_raw_halo
 
-        session = HaloSession()
+        adapter = create_raw_halo(threshold=HALO_THRESHOLD)
 
-    system = [{"type": "text", "text": SYSTEM_PROMPT + (HALO_GUIDANCE if halo else ""),
+    guidance = (adapter.guidance + DOMAIN_HINT) if adapter else ""
+    system = [{"type": "text", "text": SYSTEM_PROMPT + guidance,
                "cache_control": {"type": "ephemeral"}}]
-    tools = build_tools(halo)
+    tools = build_tools(adapter.tool_def if adapter else None)
     prompt = (
         f"Adjudicate insurance claim {claim_id} end to end: decide each service line "
         f"(pay/deny/reduce/pend) with the deterministic engine and the standard reason codes, "
@@ -189,7 +173,7 @@ async def run(claim_id: str) -> None:
         for block in resp.content:
             if block.type == "tool_use":
                 try:
-                    text = await _execute(block.name, dict(block.input), session)
+                    text = await _execute(block.name, dict(block.input), adapter)
                     results.append({"type": "tool_result", "tool_use_id": block.id, "content": text})
                 except Exception as e:  # surface tool errors back to the model
                     results.append({"type": "tool_result", "tool_use_id": block.id,
@@ -202,7 +186,7 @@ async def run(claim_id: str) -> None:
         "estimated_cost_usd": _cost(usage, MODEL_VERSION),
         "turns": turns, "tool_calls": dict(tool_calls),
         "halo_fetch_calls": tool_calls.get("halo_fetch", 0),
-        "halo_maps": len(getattr(session, "_maps", {})) if session else 0,
+        "halo_maps": len(getattr(adapter.session, "_maps", {})) if adapter else 0,
     }
     RUNS.mkdir(exist_ok=True)
     (RUNS / f"{label}.json").write_text(json.dumps(summary, indent=2))
@@ -213,22 +197,20 @@ async def run(claim_id: str) -> None:
 
 async def selftest(claim_id: str) -> None:
     """Exercise tool dispatch + Halo encode/fetch with NO API call (no key needed)."""
-    from halo_format_claude.session import HaloSession
-    from halo_format_claude.serialize import serialize_envelope
+    from halo_format_claude.raw import create_raw_halo
 
     print("== raw-api self-test (no API call) ==")
     prov = await S.payer_get_agent_provenance()
     print("provenance tool ok:", prov["agent_id"])
 
-    session = HaloSession()
+    adapter = create_raw_halo(threshold=HALO_THRESHOLD)
     claim = await S.payer_get_claim(claim_id)
     full = json.dumps(claim)
-    res = session.ingest("payer_get_claim", {"claim_id": claim_id}, claim)
-    shape = serialize_envelope(res["envelope"], session.describe(res["envelope"]))
+    shape = adapter.encode_result("payer_get_claim", {"claim_id": claim_id}, claim)
     print(f"get_claim: full={len(full)}B  shape_map_model_sees={len(shape)}B  "
           f"({100*(1-len(shape)/len(full)):.0f}% smaller)")
-    fetched = session.fetch([f"{res['id']}.lines"])
-    ref = f"{res['id']}.lines"
+    ref = f"{claim_id}.lines"
+    fetched = json.loads(adapter.fetch([ref]))
     ok = fetched[ref]["ok"] and isinstance(fetched[ref]["value"], list)
     print(f"halo_fetch(['{ref}']) verified ok: {ok} ({len(fetched[ref]['value'])} lines)")
     eng = await S.payer_adjudicate_line(claim_id, 1)

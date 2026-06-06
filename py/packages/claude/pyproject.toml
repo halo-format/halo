@@ -1,13 +1,18 @@
 [project]
 name = "halo-format-claude"
 version = "0.1.1"
-description = "Halo host adapter for the Claude Agent SDK (Python): a PostToolUse encode hook plus in-process halo_walk / halo_fetch MCP tools. install_halo() wires it in one call."
+description = "Halo adapter for Claude on two runtimes (Python): the Agent SDK (install_halo — a PostToolUse encode hook + a single in-process halo_fetch MCP tool) and the raw Messages API (halo_format_claude.raw — create_raw_halo, no Agent SDK needed). Tool results become a shape map kept out of context."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-# The adapter is a separate opt-in package; depending on the host SDK the consumer already has is
-# correct. The "lightest install" principle is about the core (halo-format), which stays zero-dep.
-dependencies = ["halo-format", "claude-agent-sdk>=0.2.0"]
+# Only the core is required. The Agent SDK is an optional extra (claude-agent-sdk), so the raw
+# Messages API path (`import halo_format_claude.raw`) installs and runs without it; install
+# `halo-format-claude[agent-sdk]` for the install_halo hook adapter. The package imports the SDK
+# lazily so the raw submodule never touches it.
+dependencies = ["halo-format"]
+
+[project.optional-dependencies]
+agent-sdk = ["claude-agent-sdk>=0.2.0"]
 
 [project.urls]
 Homepage = "https://github.com/halo-format/halo"

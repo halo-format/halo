@@ -18,7 +18,7 @@ import json
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
-from .constants import HALO_FETCH_TOOL, HALO_MCP_SERVER
+from .constants import HALO_FETCH_DESCRIPTION, HALO_FETCH_TOOL, HALO_MCP_SERVER
 
 
 def halo_fetch(session, refs) -> dict:
@@ -30,19 +30,10 @@ def _ok(value) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(value)}]}
 
 
-_FETCH_DESC = (
-    "The one tool for reading a halo map. Pass ALL the refs a step needs in one call (refs is a list) "
-    "rather than one at a time — each call is a separate round trip. A ref like `m1.income` (or a raw "
-    "`h:` handle) that points at a value returns it as {ok:true,value}; a ref that points at a "
-    "[branch] returns {ok:true,kind:'branch',fields:[…]} listing its sub-refs to fetch next. An entry "
-    "with ok=false (e.g. HashMismatch) means that data must not be trusted."
-)
-
-
 def create_nav_server(session):
     """Build the in-process MCP server exposing the single halo_fetch tool over the given session."""
 
-    @tool(HALO_FETCH_TOOL, _FETCH_DESC, {"refs": list[str]})
+    @tool(HALO_FETCH_TOOL, HALO_FETCH_DESCRIPTION, {"refs": list[str]})
     async def _fetch(args):
         return _ok(halo_fetch(session, args["refs"]))
 

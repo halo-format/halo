@@ -12,14 +12,17 @@
 //
 // With HALO=1 a large tool result is encoded (by hand — the raw API has no hook)
 // into a Halo store; the model sees the shape map and pulls fields with halo_fetch.
+// The encode/fetch mechanism is the published adapter's raw-Messages-API surface
+// (@halo-format/claude/raw — createRawHalo), the same engine the Agent SDK path drives
+// via a hook, so this example carries no Halo code of its own.
 // --selftest exercises tool dispatch + Halo encode/fetch with no API call.
 // ============================================================================
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { createRawHalo, type RawHalo } from "@halo-format/claude/raw";
 import { MODEL_VERSION, SYSTEM_PROMPT } from "./prompts.js";
 import { DISPATCH, TOOL_DEFS } from "./tools.js";
-import { HaloSession } from "./halo.js";
 import { closePool } from "./db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,39 +37,21 @@ const PRICING: Record<string, { in: number; out: number; cr: number; cw: number 
   "claude-haiku-4-5": { in: 1, out: 5, cr: 0.1, cw: 1.25 },
 };
 
-const HALO_GUIDANCE =
-  "\n\n## Halo: navigating large tool results\n" +
-  'Some tool results arrive as a *halo shape map* — a `[halo] map "<id>"` note with one line per ' +
-  "field (ref, kind, bounded preview); the data is held, verified, in a store out of your context. " +
-  'Read the previews, then fetch ONLY the fields you still need in ONE halo_fetch call, passing refs ' +
-  'like ["CLM-PROF.lines"]. For a claim, fetch the service `lines`; do NOT fetch the ' +
-  "`attachment_bodies` bulk. Use fetched values as if returned inline.";
+// A one-line domain hint appended to the package's generic navigation guidance.
+const DOMAIN_HINT =
+  "\nFor a claim, fetch the service `lines`; do NOT fetch the `attachment_bodies` bulk.";
 
-const HALO_FETCH_DEF = {
-  name: "halo_fetch",
-  description:
-    "Read a halo map. Pass ALL refs a step needs in one call (refs is a list). A ref like " +
-    "'CLM-PROF.lines' returns its value; ok=false means untrusted.",
-  input_schema: { type: "object" as const, properties: { refs: { type: "array" as const, items: { type: "string" as const } } }, required: ["refs"] },
-};
-
-function buildTools(halo: boolean): any[] {
-  const defs: any[] = [...TOOL_DEFS, ...(halo ? [HALO_FETCH_DEF] : [])];
+function buildTools(haloDef?: unknown): any[] {
+  const defs: any[] = [...TOOL_DEFS, ...(haloDef ? [haloDef] : [])];
   // cache tools + system together (prompt caching).
   defs[defs.length - 1] = { ...defs[defs.length - 1], cache_control: { type: "ephemeral" } };
   return defs;
 }
 
-function mapIdFor(name: string, args: any, counter: { n: number }): string {
-  return args?.claim_id || args?.member_id || `m${++counter.n}`;
-}
-
-async function execute(name: string, args: any, session: HaloSession | null, counter: { n: number }): Promise<string> {
-  if (name === "halo_fetch") return JSON.stringify(await session!.fetch(args.refs)); // never re-encode
+async function execute(name: string, args: any, halo: RawHalo | null): Promise<string> {
+  if (halo && halo.isFetch(name)) return halo.fetch(args.refs); // verified leaves; never re-encode
   const result = await DISPATCH[name](args);
-  const payload = JSON.stringify(result);
-  if (session && payload.length >= THRESHOLD) return await session.ingest(mapIdFor(name, args, counter), result);
-  return payload;
+  return halo ? halo.encodeResult(name, args, result) : JSON.stringify(result);
 }
 
 function cost(u: Record<string, number>, model: string): number | null {
@@ -83,11 +68,10 @@ async function run(claimId: string): Promise<void> {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const label = process.env.RUN_LABEL || (HALO ? "raw_halo" : "raw_baseline");
-  const session = HALO ? new HaloSession() : null;
-  const counter = { n: 0 };
+  const halo: RawHalo | null = HALO ? createRawHalo({ threshold: THRESHOLD }) : null;
 
-  const system = [{ type: "text" as const, text: SYSTEM_PROMPT + (HALO ? HALO_GUIDANCE : ""), cache_control: { type: "ephemeral" as const } }];
-  const tools = buildTools(HALO);
+  const system = [{ type: "text" as const, text: SYSTEM_PROMPT + (halo ? halo.guidance + DOMAIN_HINT : ""), cache_control: { type: "ephemeral" as const } }];
+  const tools = buildTools(halo?.toolDef);
   const prompt =
     `Adjudicate insurance claim ${claimId} end to end: decide each service line ` +
     `(pay/deny/reduce/pend) with the deterministic engine and the standard reason codes, record the ` +
@@ -121,7 +105,7 @@ async function run(claimId: string): Promise<void> {
     for (const block of resp.content) {
       if (block.type === "tool_use") {
         try {
-          results.push({ type: "tool_result", tool_use_id: block.id, content: await execute(block.name, block.input, session, counter) });
+          results.push({ type: "tool_result", tool_use_id: block.id, content: await execute(block.name, block.input, halo) });
         } catch (e: any) {
           results.push({ type: "tool_result", tool_use_id: block.id, content: `error: ${e?.message ?? e}`, is_error: true });
         }
@@ -134,7 +118,7 @@ async function run(claimId: string): Promise<void> {
   const summary = {
     label, runtime: "raw_messages_api_ts", halo_enabled: HALO, model: MODEL_VERSION,
     tokens: usage, total_tokens: total, estimated_cost_usd: cost(usage, MODEL_VERSION),
-    turns, tool_calls: toolCalls, halo_fetch_calls: toolCalls["halo_fetch"] || 0, halo_maps: session?.maps.size ?? 0,
+    turns, tool_calls: toolCalls, halo_fetch_calls: toolCalls["halo_fetch"] || 0,
   };
   mkdirSync(RUNS, { recursive: true });
   writeFileSync(join(RUNS, `${label}.json`), JSON.stringify(summary, null, 2));
@@ -147,12 +131,12 @@ async function selftest(claimId: string): Promise<void> {
   console.log("== TS raw-api self-test (no API call) ==");
   const prov = await DISPATCH.payer_get_agent_provenance({});
   console.log("provenance tool ok:", prov.agent_id);
-  const session = new HaloSession();
+  const halo = createRawHalo({ threshold: THRESHOLD });
   const claim = await DISPATCH.payer_get_claim({ claim_id: claimId });
   const full = JSON.stringify(claim);
-  const shape = await session.ingest(claimId, claim);
+  const shape = await halo.encodeResult("payer_get_claim", { claim_id: claimId }, claim);
   console.log(`get_claim: full=${full.length}B  shape_map_model_sees=${shape.length}B  (${Math.round(100 * (1 - shape.length / full.length))}% smaller)`);
-  const fetched: any = await session.fetch([`${claimId}.lines`]);
+  const fetched: any = JSON.parse(await halo.fetch([`${claimId}.lines`]));
   const ref = `${claimId}.lines`;
   console.log(`halo_fetch(['${ref}']) verified ok: ${fetched[ref].ok && Array.isArray(fetched[ref].value)} (${fetched[ref].value?.length} lines)`);
   const eng = await DISPATCH.payer_adjudicate_line({ claim_id: claimId, line_number: 1 });
