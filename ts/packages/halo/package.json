@@ -1,6 +1,6 @@
 {
   "name": "@halo-format/halo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Halo core: encode a value into a content-addressed navigable tree and read it back, verified. Zero runtime deps beyond a hashing primitive and a JCS canonicalizer.",
   "type": "module",
   "exports": {
