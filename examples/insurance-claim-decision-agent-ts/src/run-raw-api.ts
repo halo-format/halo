@@ -39,7 +39,10 @@ const PRICING: Record<string, { in: number; out: number; cr: number; cw: number 
 
 // A one-line domain hint appended to the package's generic navigation guidance.
 const DOMAIN_HINT =
-  "\nFor a claim, fetch the service `lines`; do NOT fetch the `attachment_bodies` bulk.";
+  "\nFor a claim, fetch the service `lines` from the map. For a line needing documentation review " +
+  "(major restorative, endodontic, periodontal, oral surgery), call payer_get_attachment for its " +
+  "supporting attachment and read ONLY `narrative` and `findings` — never fetch `image_b64` (raw " +
+  "pixels: large and unreadable). Routine preventive/basic lines need no attachment.";
 
 function buildTools(haloDef?: unknown): any[] {
   const defs: any[] = [...TOOL_DEFS, ...(haloDef ? [haloDef] : [])];

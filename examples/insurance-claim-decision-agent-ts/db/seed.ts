@@ -43,6 +43,7 @@ const CORE: [string, string, boolean, number, string | null, number, boolean, nu
   ["D1110", "preventive", true, 100, "2/year", 0, false, 12000],
   ["D2391", "basic", true, 80, null, 0, false, 18000],
   ["D2740", "major", true, 50, "1/5year", 12, false, 100000],
+  ["D2750", "major", true, 50, "1/5year", 12, false, 100000],
   ["D4341", "basic", true, 80, "2/year", 0, true, 28000],
   ["D9972", "cosmetic", false, 0, null, 0, false, 25000],
 ];
@@ -142,8 +143,23 @@ async function main(): Promise<void> {
     await x("INSERT INTO ext.claim_lines (id, claim_id, line_number, procedure_code, tooth, surface, date_of_service, units, charged_cents, status) VALUES ($1,'CLM-PROF',$2,$3,$4,$5,'2026-04-10',1,$6,'pending')",
       [`CLP-${ln}`, ln, code, tooth, surface, ch]);
 
+  // LARGE claim CLM-BIG (Sam) — documentation review, REST-correct. Exam + two crowns; the crowns
+  // are major restorative → documentation-required, so the agent fetches their attachment BODIES
+  // (large raw image_b64) and reads only narrative/findings. Other attachments are never fetched.
+  const nBig = Number(process.env.BIG_ATTACHMENTS || "14");
+  const big: [number, string, string | null, string | null, number][] = [
+    [1, "D0120", null, null, 6500], [2, "D2740", "3", null, 100000], [3, "D2750", "19", null, 100000],
+  ];
+  const bigAtts = Array.from({ length: nBig }, (_, i) => `ATT-BIG-${String(i + 1).padStart(2, "0")}`);
+  await x("INSERT INTO ext.claims (id, claim_number, member_id, provider_id, date_received, place_of_service, diagnosis_codes, attachments, total_charged_cents, status) VALUES ('CLM-BIG','CN-BIG',$1,$2,'2026-06-01','11',$3::jsonb,$4::jsonb,$5,'received')",
+    [MP, PROV, JSON.stringify(["K02.9", "K04.0"]), JSON.stringify(bigAtts), big.reduce((s, l) => s + l[4], 0)]);
+  for (const [ln, code, tooth, surface, ch] of big)
+    await x("INSERT INTO ext.claim_lines (id, claim_id, line_number, procedure_code, tooth, surface, date_of_service, units, charged_cents, status) VALUES ($1,'CLM-BIG',$2,$3,$4,$5,'2026-05-18',1,$6,'pending')",
+      [`CLB-${ln}`, ln, code, tooth, surface, ch]);
+
   console.log("Seeded mimic_payer:");
   console.log("  demo claim   CLM-1001 (Dana Whitfield) — pay/pay/reduce/pend/deny → human review");
+  console.log(`  large claim  CLM-BIG (Sam Profile)      — exam + 2 crowns, ${nBig} attachments, 2 need documentation review → human review`);
   console.log("  clean claim  CLM-2001 (Marco Reyes)    — all pay, below ceiling → auto-finalize");
   console.log(`  profile claim CLM-PROF (Sam Profile)    — all pay, ${nAtt} attachments → A/B harness`);
   console.log(`  ${nRules} benefit rules, ${REASON_CODES.length} reason codes`);

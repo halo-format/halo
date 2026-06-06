@@ -1,0 +1,33 @@
+{
+  "label": "raw_halo_ts_CLM-BIG",
+  "runtime": "raw_messages_api_ts",
+  "halo_enabled": true,
+  "model": "claude-sonnet-4-6",
+  "tokens": {
+    "input_tokens": 17872,
+    "output_tokens": 5304,
+    "cache_read_input_tokens": 85364,
+    "cache_creation_input_tokens": 13642
+  },
+  "total_tokens": 122182,
+  "estimated_cost_usd": 0.209943,
+  "turns": 12,
+  "tool_calls": {
+    "payer_get_claim": 1,
+    "payer_get_agent_provenance": 1,
+    "halo_fetch": 3,
+    "payer_get_member_coverage": 1,
+    "payer_check_network": 2,
+    "payer_get_attachment": 3,
+    "payer_get_benefit_rules": 1,
+    "payer_get_allowed_amount": 1,
+    "payer_get_accumulators": 1,
+    "payer_get_claim_history": 3,
+    "payer_adjudicate_line": 3,
+    "payer_lookup_reason_code": 1,
+    "payer_record_decision": 1,
+    "payer_request_review": 1,
+    "payer_post_adjudication": 1
+  },
+  "halo_fetch_calls": 3
+}
