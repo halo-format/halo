@@ -2,25 +2,54 @@
 // Run the insurance-claim agent on LangGraph, with Claude (TypeScript).
 //
 // LangChain v1 / LangGraph: `createAgent` drives the model-calls-tools loop over
-// the 13 payer tools, with `ChatAnthropic` as the model. The deterministic engine,
+// the 15 payer tools, with `ChatAnthropic` as the model. The deterministic engine,
 // the human-review gate, and the reason codes are reused unchanged.
 //
 //   tsx src/agent.ts CLM-PROF            # adjudicate a claim end to end
 //   tsx src/agent.ts CLM-PROF --selftest # tool dispatch + engine, no API key
+//   HALO=1 tsx src/agent.ts CLM-PROF     # attach the Halo LangGraph adapter (A/B)
 //
-// Ships WITHOUT a Halo integration — tools return plain JSON. The Halo LangGraph
-// host adapter attaches separately; this is the clean agent it wraps.
+// By default tools return plain JSON. HALO=1 attaches the Halo LangGraph host adapter:
+// a wrapToolCall middleware encodes a large tool result (the on-demand attachment body)
+// into a content-addressed store and hands the model a shape map plus a halo_fetch tool.
 // ============================================================================
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { MODEL_VERSION, SYSTEM_PROMPT } from "./prompts.js";
-import { TOOLS, payer_get_agent_provenance, payer_get_claim, payer_adjudicate_line } from "./tools.js";
+import {
+  TOOLS,
+  payer_get_agent_provenance,
+  payer_get_claim,
+  payer_get_attachment,
+  payer_adjudicate_line,
+} from "./tools.js";
 import { closePool } from "./db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUNS = join(__dirname, "..", "runs");
 const MAX_STEPS = Number(process.env.LG_RECURSION_LIMIT || "120");
+
+// ── Halo toggle ─────────────────────────────────────────────────────────────
+const HALO_ENABLED = ["1", "true", "yes", "on"].includes((process.env.HALO || "").toLowerCase());
+const HALO_THRESHOLD = Number(process.env.HALO_THRESHOLD || "2048");
+
+const HALO_GUIDANCE = `
+
+## Large tool results (Halo)
+
+Some tool results come back not as the full payload but as a Halo **shape map** — a
+\`[halo] map …\` note with a root kind and one line per field (ref, kind, and a bounded
+preview). The full data is held, verified, out of your context.
+
+- Read the shape map first; the previews are sized to let you decide, so most steps need
+  no fetch at all.
+- To read a field you still need, call \`halo_fetch(refs=[...])\` with an ARRAY of refs —
+  batch every ref a step needs into ONE call (each call is a round trip). A \`[branch]\`
+  ref returns its sub-refs to fetch next; every other ref returns its value.
+- For an attachment body, fetch only \`narrative\` and \`findings\`. Never fetch \`image_b64\`
+  — it is raw pixels you never read.
+`;
 
 const PRICING: Record<string, { in: number; out: number; cr: number; cw: number }> = {
   "claude-opus-4-8": { in: 5, out: 25, cr: 0.5, cw: 6.25 },
@@ -38,11 +67,20 @@ async function buildAgent() {
   const { createAgent } = await import("langchain");
   const { ChatAnthropic } = await import("@langchain/anthropic");
   const model = new ChatAnthropic({ model: MODEL_VERSION, maxTokens: 8000 });
-  return createAgent({ model, tools: TOOLS, systemPrompt: SYSTEM_PROMPT });
+  if (!HALO_ENABLED) return createAgent({ model, tools: TOOLS, systemPrompt: SYSTEM_PROMPT });
+
+  const { installHalo } = await import("@halo-format/langgraph");
+  const installed = installHalo({ tools: TOOLS, threshold: HALO_THRESHOLD });
+  return createAgent({
+    model,
+    tools: installed.tools as typeof TOOLS,         // TOOLS + halo_fetch
+    middleware: installed.middleware as any,        // the wrapToolCall encode middleware
+    systemPrompt: SYSTEM_PROMPT + HALO_GUIDANCE,
+  });
 }
 
 async function run(claimId: string): Promise<void> {
-  const label = process.env.RUN_LABEL || "langgraph_ts";
+  const label = process.env.RUN_LABEL || (HALO_ENABLED ? "halo" : "baseline");
   const agent = await buildAgent();
   const prompt =
     `Adjudicate insurance claim ${claimId} end to end: decide each service line ` +
@@ -73,7 +111,7 @@ async function run(claimId: string): Promise<void> {
   console.log(typeof last.content === "string" ? last.content : JSON.stringify(last.content));
 
   const total = Object.values(usage).reduce((a, b) => a + b, 0);
-  const summary = { label, runtime: "langgraph_ts", model: MODEL_VERSION, tokens: usage, total_tokens: total,
+  const summary = { label, runtime: "langgraph_ts", halo: HALO_ENABLED, model: MODEL_VERSION, tokens: usage, total_tokens: total,
     estimated_cost_usd: cost(usage, MODEL_VERSION), tool_calls: tools, tool_call_total: Object.values(tools).reduce((a, b) => a + b, 0) };
   mkdirSync(RUNS, { recursive: true });
   writeFileSync(join(RUNS, `${label}.json`), JSON.stringify(summary, null, 2));
@@ -86,11 +124,28 @@ async function selftest(claimId: string): Promise<void> {
   console.log("== LangGraph self-test (no API call) ==");
   const prov = JSON.parse(await payer_get_agent_provenance.invoke({}));
   console.log("provenance tool ok:", prov.agent_id);
+
   const claim = JSON.parse(await payer_get_claim.invoke({ claim_id: claimId }));
-  console.log(`get_claim ok: ${(claim.lines || []).length} lines, ${JSON.stringify(claim).length}B payload (heavy — for the Halo adapter to encode)`);
+  const manifest = claim.attachments || [];
+  console.log(`get_claim ok: ${(claim.lines || []).length} lines, ${manifest.length} attachment(s) in manifest, ${JSON.stringify(claim).length}B (light — refs + metadata, no bodies)`);
+
+  if (manifest.length) {
+    const ref = manifest[0].ref;
+    const body = JSON.parse(await payer_get_attachment.invoke({ claim_id: claimId, attachment_ref: ref }));
+    console.log(`get_attachment(${ref}) ok: ${JSON.stringify(body).length}B body — image_b64 ${(body.image_b64 || "").length}B (heavy — for the Halo adapter to encode)`);
+  }
+
   const eng = JSON.parse(await payer_adjudicate_line.invoke({ claim_id: claimId, line_number: 1 }));
   console.log(`engine adjudicate_line(1): plan_paid=${eng.plan_paid_cents} review_required=${eng.review_required}`);
   console.log(`tools wired: ${TOOLS.length} LangChain tools`);
+
+  if (HALO_ENABLED) {
+    const { installHalo } = await import("@halo-format/langgraph");
+    const installed = installHalo({ tools: TOOLS, threshold: HALO_THRESHOLD });
+    const names = (installed.tools as any[]).map((t) => t.name);
+    if (!names.includes("halo_fetch") || !installed.middleware.length) throw new Error("halo wiring incomplete");
+    console.log(`halo wiring ok: +halo_fetch tool (${installed.tools.length} total), +${installed.middleware.length} middleware (HALO on)`);
+  }
   console.log("== self-test OK: LangChain tools + deterministic engine functional ==");
   await closePool();
 }

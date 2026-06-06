@@ -1,7 +1,7 @@
 [project]
 name = "insurance-claim-langgraph"
 version = "0.1.0"
-description = "LangGraph port of the insurance-claim-decision-agent: a prebuilt tool-calling agent (LangChain v1 / LangGraph) with ChatAnthropic over the same deterministic engine. Ships without a Halo integration — the Halo LangGraph adapter attaches separately."
+description = "LangGraph port of the insurance-claim-decision-agent: a prebuilt tool-calling agent (LangChain v1 / LangGraph) with ChatAnthropic over the same deterministic engine. HALO=1 attaches the Halo LangGraph adapter for an A/B."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -10,6 +10,8 @@ dependencies = [
     "langchain-anthropic>=1.0",
     "asyncpg>=0.29",
     "python-dotenv>=1.0",
+    "halo-format>=0.3.0",
+    "halo-format-langgraph>=0.3.0",
 ]
 
 [project.optional-dependencies]

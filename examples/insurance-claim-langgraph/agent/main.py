@@ -51,16 +51,60 @@ def _cost(u: dict, model: str):
                  + u.get("cache_read", 0) * p["cr"] / m + u.get("cache_creation", 0) * p["cw"] / m, 6)
 
 
+# ── Halo toggle ───────────────────────────────────────────────────────────────
+# HALO=1 attaches the Halo LangGraph adapter: a wrap_tool_call middleware encodes any
+# large tool result (the on-demand attachment body) into a content-addressed store and
+# hands the model a shape map, plus a halo_fetch tool to pull back only the fields it
+# needs. Guidance rides in the system prompt (prompt mode) — no skills system needed.
+HALO_ENABLED = os.environ.get("HALO", "").lower() in ("1", "true", "yes", "on")
+HALO_THRESHOLD = int(os.environ.get("HALO_THRESHOLD", "2048"))
+# CACHE=1 turns on Anthropic prompt caching (ChatAnthropic does not by default). Applies to both the
+# baseline and Halo arms, so the A/B stays fair — see agent/caching.py.
+CACHE_ENABLED = os.environ.get("CACHE", "").lower() in ("1", "true", "yes", "on")
+
+HALO_GUIDANCE = """
+
+## Large tool results (Halo)
+
+Some tool results come back not as the full payload but as a Halo **shape map** — a
+`[halo] map …` note with a root kind and one line per field (ref, kind, and a bounded
+preview). The full data is held, verified, out of your context.
+
+- Read the shape map first; the previews are sized to let you decide, so most steps need
+  no fetch at all.
+- To read a field you still need, call `halo_fetch(refs=[...])` with an ARRAY of refs —
+  batch every ref a step needs into ONE call (each call is a round trip). A `[branch]`
+  ref returns its sub-refs to fetch next; every other ref returns its value.
+- For an attachment body, fetch only `narrative` and `findings`. Never fetch `image_b64`
+  — it is raw pixels you never read.
+"""
+
+
 def _build_agent():
     from langchain.agents import create_agent
     from langchain_anthropic import ChatAnthropic
 
     model = ChatAnthropic(model=MODEL_VERSION, max_tokens=8000)
-    return create_agent(model, tools=TOOLS, system_prompt=SYSTEM_PROMPT)
+    middleware: list = []
+    if CACHE_ENABLED:
+        from .caching import PromptCachingMiddleware
+
+        middleware.append(PromptCachingMiddleware())
+
+    tools, system = TOOLS, SYSTEM_PROMPT
+    if HALO_ENABLED:
+        from halo_format_langgraph import install_halo
+
+        installed = install_halo(tools=TOOLS, threshold=HALO_THRESHOLD)
+        tools = installed.tools                          # TOOLS + halo_fetch
+        middleware = [*middleware, *installed.middleware]  # + the wrap_tool_call encode middleware
+        system = SYSTEM_PROMPT + HALO_GUIDANCE
+
+    return create_agent(model, tools=tools, middleware=middleware, system_prompt=system)
 
 
 async def run(claim_id: str) -> None:
-    label = os.environ.get("RUN_LABEL", "langgraph")
+    label = os.environ.get("RUN_LABEL", "halo" if HALO_ENABLED else "baseline")
     agent = _build_agent()
     prompt = (
         f"Adjudicate insurance claim {claim_id} end to end: decide each service line "
@@ -80,18 +124,27 @@ async def run(claim_id: str) -> None:
     for msg in result["messages"]:
         um = getattr(msg, "usage_metadata", None)
         if um:
-            usage["input_tokens"] += um.get("input_tokens", 0)
-            usage["output_tokens"] += um.get("output_tokens", 0)
             det = um.get("input_token_details") or {}
-            usage["cache_read"] += det.get("cache_read", 0) or 0
-            usage["cache_creation"] += det.get("cache_creation", 0) or 0
+            cr = det.get("cache_read", 0) or 0
+            # cache WRITES land under ephemeral_*_input_tokens in this langchain-anthropic version,
+            # not cache_creation; fall back to those.
+            cw = (det.get("cache_creation", 0) or 0) or (
+                (det.get("ephemeral_5m_input_tokens", 0) or 0) + (det.get("ephemeral_1h_input_tokens", 0) or 0)
+            )
+            # langchain's input_tokens is the GRAND total (fresh + cache_read + cache_write); split out
+            # the fresh (full-price) portion so the cost is not double-counted.
+            usage["input_tokens"] += max(0, um.get("input_tokens", 0) - cr - cw)
+            usage["output_tokens"] += um.get("output_tokens", 0)
+            usage["cache_read"] += cr
+            usage["cache_creation"] += cw
         for tc in getattr(msg, "tool_calls", None) or []:
             tools[tc["name"]] += 1
     print(getattr(result["messages"][-1], "content", "") or "")
 
     total = sum(usage.values())
     summary = {
-        "label": label, "runtime": "langgraph", "model": MODEL_VERSION,
+        "label": label, "runtime": "langgraph", "halo": HALO_ENABLED, "cache": CACHE_ENABLED,
+        "model": MODEL_VERSION,
         "tokens": dict(usage), "total_tokens": total, "estimated_cost_usd": _cost(usage, MODEL_VERSION),
         "tool_calls": dict(tools), "tool_call_total": sum(tools.values()),
     }
@@ -103,17 +156,40 @@ async def run(claim_id: str) -> None:
 
 
 async def selftest(claim_id: str) -> None:
-    from .tools import payer_adjudicate_line, payer_get_agent_provenance, payer_get_claim
+    from .tools import (
+        payer_adjudicate_line,
+        payer_get_agent_provenance,
+        payer_get_attachment,
+        payer_get_claim,
+    )
 
     print("== LangGraph self-test (no API call) ==")
     prov = json.loads(await payer_get_agent_provenance.ainvoke({}))
     print("provenance tool ok:", prov["agent_id"])
+
     claim = json.loads(await payer_get_claim.ainvoke({"claim_id": claim_id}))
-    print(f"get_claim ok: {len(claim.get('lines', []))} lines, "
-          f"{len(json.dumps(claim))}B payload (heavy — for the Halo adapter to encode)")
+    manifest = claim.get("attachments", []) or []
+    print(f"get_claim ok: {len(claim.get('lines', []))} lines, {len(manifest)} attachment(s) in "
+          f"manifest, {len(json.dumps(claim))}B (light — refs + metadata, no bodies)")
+
+    if manifest:
+        ref = manifest[0]["ref"]
+        body = json.loads(await payer_get_attachment.ainvoke({"claim_id": claim_id, "attachment_ref": ref}))
+        print(f"get_attachment({ref}) ok: {len(json.dumps(body))}B body — image_b64 "
+              f"{len(body.get('image_b64', ''))}B (heavy — for the Halo adapter to encode)")
+
     eng = json.loads(await payer_adjudicate_line.ainvoke({"claim_id": claim_id, "line_number": 1}))
     print(f"engine adjudicate_line(1): plan_paid={eng['plan_paid_cents']} review_required={eng['review_required']}")
     print(f"tools wired: {len(TOOLS)} LangChain tools")
+
+    if HALO_ENABLED:
+        from halo_format_langgraph import install_halo
+
+        installed = install_halo(tools=TOOLS, threshold=HALO_THRESHOLD)
+        names = [t.name for t in installed.tools]
+        assert "halo_fetch" in names and installed.middleware, "halo wiring incomplete"
+        print(f"halo wiring ok: +halo_fetch tool ({len(installed.tools)} total), "
+              f"+{len(installed.middleware)} middleware (HALO on)")
     print("== self-test OK: LangChain tools + deterministic engine functional ==")
 
 
