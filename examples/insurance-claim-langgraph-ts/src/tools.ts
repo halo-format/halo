@@ -1,15 +1,21 @@
 // ============================================================================
-// The 13 payer tools as LangChain tools, for the LangGraph agent (TypeScript).
+// The 15 payer tools as LangChain tools, for the LangGraph agent (TypeScript).
 //
 // Each tool wraps the same SQL on ext.*/agent.* and the same deterministic engine
 // as every other port — only the framing changes (LangChain `tool()` + zod). The
 // contract is the swap point.
 //
-// NOTE: this example ships WITHOUT a Halo integration — tools return plain JSON.
-// The Halo LangGraph host adapter attaches separately (it keeps large tool results
-// out of the model's context and records content-addressed evidence); this is the
-// clean agent it wraps. `payer_get_claim` still returns the heavy claim so there's
-// a real payload for that adapter to encode.
+// The claim API is normalized REST-style (matching the other ports): `payer_get_claim`
+// returns the header, lines, diagnosis, and an attachment MANIFEST — references and
+// light metadata (kind, byte size, which line each documents), NOT the bodies. The
+// bulky clinical bodies (narrative, findings, tooth chart, and a large raw `image_b64`
+// blob) are fetched on demand with `payer_get_attachment` / `payer_get_attachments`
+// only for a line that needs documentation review.
+//
+// NOTE: this example ships WITHOUT a Halo integration by default — tools return plain
+// JSON. The Halo LangGraph host adapter attaches separately (HALO=1); the on-demand
+// attachment body — narrative/findings the reviewer reads, plus an `image_b64` blob it
+// never reads — is exactly the payload that adapter encodes.
 // ============================================================================
 import { createHash, randomUUID } from "node:crypto";
 import { tool } from "langchain";
@@ -43,22 +49,77 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function attachmentBodies(claimId: string, refs: string[]): Json[] {
-  const seed = parseInt(createHash("sha256").update(claimId).digest("hex").slice(0, 8), 16);
-  const rng = mulberry32(seed);
-  const pick = <T>(a: T[]): T => a[Math.floor(rng() * a.length)];
-  const para = "Patient presents for evaluation. Intraoral examination performed; findings documented. " +
-    "Radiographic series reviewed. Treatment plan discussed and consent obtained.";
-  return (refs || []).map((ref) => {
-    const chart: Record<string, string> = {};
-    for (let t = 1; t <= 32; t++) chart[t] = pick(["sound", "restored", "caries", "missing"]);
+// ── attachment synthesis (deterministic from claimId + ref) ──────────────────
+// A claim references attachments; the bodies are retrieved separately. The body carries
+// a large raw image blob (image_b64) a reviewer never reads — only narrative/findings
+// matter — which is exactly the field Halo lets the model skip.
+const ATTACH_KINDS = ["periapical_xray", "bitewing_xray", "panoramic_xray", "perio_chart", "clinical_note"];
+const NARRATIVE =
+  "Patient presents for evaluation. Intraoral examination performed; findings documented " +
+  "per chart. Radiographic series reviewed and correlated with the clinical exam. Treatment " +
+  "plan discussed with the patient and informed consent obtained. No adverse reaction noted.";
+const FINDINGS = [
+  "Radiograph supports the proposed restoration; margins intact, no periapical pathology.",
+  "Generalized moderate periodontitis; scaling and root planing indicated for the quadrant.",
+  "Deep carious lesion approximating the pulp; crown indicated to restore the tooth.",
+  "No acute findings; documentation supports the submitted procedure.",
+];
+
+// Major restorative / endodontic / periodontal / oral-surgery codes need a clinical
+// attachment. Preventive (D01/D11) and basic single-surface restorations do not.
+function needsDocumentation(code: string): boolean {
+  const c = (code || "").toUpperCase();
+  return (
+    c.startsWith("D27") || c.startsWith("D6") || // crowns / fixed prosthodontics
+    c.startsWith("D3") ||                         // endodontics
+    (c.startsWith("D4") && c >= "D4210") ||       // periodontal surgery / scaling
+    c.startsWith("D7")                            // oral surgery
+  );
+}
+
+// Deterministic scalar fields for one attachment, in a FIXED order so the manifest
+// (get_claim) and the body (get_attachment) always agree.
+function attachmentFields(claimId: string, ref: string) {
+  const rng = mulberry32(parseInt(createHash("sha256").update(`${claimId}/${ref}`).digest("hex").slice(0, 8), 16));
+  const kind = ATTACH_KINDS[Math.floor(rng() * ATTACH_KINDS.length)];
+  const capturedAt = `2026-0${1 + Math.floor(rng() * 5)}-${10 + Math.floor(rng() * 18)}`;
+  const imageKb = 18 + Math.floor(rng() * 22); // the bulky raw-image payload, in KB
+  const narrativeRepeat = 2 + Math.floor(rng() * 3);
+  const finding = FINDINGS[Math.floor(rng() * FINDINGS.length)];
+  return { kind, capturedAt, imageKb, narrativeRepeat, finding };
+}
+
+// Light per-attachment metadata: ref, kind, capture date, byte size, and which line it
+// documents. No bodies — this is what a claim fetch should return.
+function attachmentManifest(claimId: string, lines: Json[], refs: string[]): Json[] {
+  const docLines = (lines || []).filter((l) => needsDocumentation(l.procedure_code)).map((l) => l.line_number);
+  return (refs || []).map((ref, i) => {
+    const { kind, capturedAt, imageKb } = attachmentFields(claimId, ref);
     return {
-      attachment_ref: ref, kind: pick(["clinical_note", "periapical_xray", "bitewing_xray", "perio_chart"]),
-      captured_at: `2026-0${1 + Math.floor(rng() * 5)}-${10 + Math.floor(rng() * 18)}`,
-      narrative: Array(2 + Math.floor(rng() * 3)).fill(para).join(" "),
-      tooth_chart: chart, image_meta: { dpi: 300, bytes: 180000 + Math.floor(rng() * 740000), modality: "intraoral" },
+      ref, kind, captured_at: capturedAt, modality: "intraoral",
+      image_bytes: imageKb * 1024,
+      documents_line: i < docLines.length ? docLines[i] : null,
     };
   });
+}
+
+// The full attachment: narrative + findings + tooth chart + a large raw image blob.
+// image_b64 is the bulk — a reviewer reads narrative/findings, never the pixels.
+function attachmentBody(claimId: string, ref: string): Json {
+  const { kind, capturedAt, imageKb, narrativeRepeat, finding } = attachmentFields(claimId, ref);
+  const chartRng = mulberry32(parseInt(createHash("sha256").update(`${claimId}/${ref}/chart`).digest("hex").slice(0, 8), 16));
+  const chart: Record<string, string> = {};
+  for (let t = 1; t <= 32; t++) chart[t] = ["sound", "restored", "caries", "missing"][Math.floor(chartRng() * 4)];
+  const unit = createHash("sha256").update(`${claimId}/${ref}/image`).digest("base64");
+  const imageB64 = unit.repeat(Math.ceil((imageKb * 1024) / unit.length)).slice(0, imageKb * 1024);
+  return {
+    attachment_ref: ref, claim_id: claimId, kind, captured_at: capturedAt,
+    narrative: Array(narrativeRepeat).fill(NARRATIVE).join(" "),
+    findings: finding,
+    tooth_chart: chart,
+    image_meta: { dpi: 300, bytes: imageKb * 1024, modality: "intraoral" },
+    image_b64: imageB64, // raw pixels — large, not human-readable; do not fetch for review
+  };
 }
 
 // ── tools ─────────────────────────────────────────────────────────────────────
@@ -72,9 +133,30 @@ export const payer_get_claim = tool(
     const claim = await one("SELECT * FROM ext.claims WHERE id=$1", [claim_id]);
     if (!claim) return JSON.stringify({ error: "claim_not_found", claim_id });
     const lines = await q("SELECT * FROM ext.claim_lines WHERE claim_id=$1 ORDER BY line_number", [claim_id]);
-    return JSON.stringify({ ...claim, lines, attachment_bodies: attachmentBodies(claim.id, claim.attachments || []) });
+    return JSON.stringify({ ...claim, lines, attachments: attachmentManifest(claim.id, lines, claim.attachments || []) });
   },
-  { name: "payer_get_claim", description: "Fetch the 837 claim: header + service lines + diagnosis + attachment refs/bodies (heavy).", schema: z.object({ claim_id: z.string() }) },
+  { name: "payer_get_claim", description: "Fetch the 837 claim: header, service lines, diagnosis, and an attachment MANIFEST (refs + metadata, not bodies). Fetch bodies on demand with payer_get_attachment when a line needs documentation review.", schema: z.object({ claim_id: z.string() }) },
+);
+
+export const payer_get_attachment = tool(
+  async ({ claim_id, attachment_ref }) => {
+    const claim = await one("SELECT attachments FROM ext.claims WHERE id=$1", [claim_id]);
+    if (!claim) return JSON.stringify({ error: "claim_not_found", claim_id });
+    if (!(claim.attachments || []).includes(attachment_ref))
+      return JSON.stringify({ error: "attachment_not_found", claim_id, attachment_ref });
+    return JSON.stringify(attachmentBody(claim_id, attachment_ref));
+  },
+  { name: "payer_get_attachment", description: "Fetch ONE attachment's full body (narrative + findings + tooth chart + raw image_b64) for documentation review. Large — read narrative/findings, never image_b64. Only for a line needing documentation (major restorative, endodontic, periodontal, oral surgery).", schema: z.object({ claim_id: z.string(), attachment_ref: z.string() }) },
+);
+
+export const payer_get_attachments = tool(
+  async ({ claim_id, attachment_refs }) => {
+    const claim = await one("SELECT attachments FROM ext.claims WHERE id=$1", [claim_id]);
+    if (!claim) return JSON.stringify({ error: "claim_not_found", claim_id });
+    const valid = new Set<string>(claim.attachments || []);
+    return JSON.stringify({ claim_id, attachments: attachment_refs.filter((r) => valid.has(r)).map((r) => attachmentBody(claim_id, r)) });
+  },
+  { name: "payer_get_attachments", description: "Batch form of payer_get_attachment — fetch several attachment bodies in one call.", schema: z.object({ claim_id: z.string(), attachment_refs: z.array(z.string()) }) },
 );
 
 export const payer_get_member_coverage = tool(
@@ -270,8 +352,8 @@ export const payer_post_adjudication = tool(
 );
 
 export const TOOLS = [
-  payer_get_agent_provenance, payer_get_claim, payer_get_member_coverage, payer_get_benefit_rules,
-  payer_get_accumulators, payer_get_claim_history, payer_check_network, payer_get_allowed_amount,
-  payer_lookup_reason_code, payer_adjudicate_line, payer_record_decision, payer_request_review,
-  payer_post_adjudication,
+  payer_get_agent_provenance, payer_get_claim, payer_get_attachment, payer_get_attachments,
+  payer_get_member_coverage, payer_get_benefit_rules, payer_get_accumulators, payer_get_claim_history,
+  payer_check_network, payer_get_allowed_amount, payer_lookup_reason_code, payer_adjudicate_line,
+  payer_record_decision, payer_request_review, payer_post_adjudication,
 ];

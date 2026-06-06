@@ -5,27 +5,32 @@ A **LangGraph** port of the insurance-claim-decision-agent in TypeScript. It use
 `ChatAnthropic` (`@langchain/anthropic`), over the **same deterministic engine,
 schema, and human-review gate** as the other ports. Only the agent harness changes.
 
-> **No Halo here on purpose.** The tools return plain JSON; this is the clean agent
-> the **Halo LangGraph host adapter** attaches to. `payer_get_claim` still returns
-> the heavy claim (header + lines + bulky attachment bodies) so there's a real
-> payload for that adapter to encode.
+> **Halo is opt-in (`HALO=1`).** By default the tools return plain JSON — this is the
+> clean baseline. `HALO=1` attaches the **Halo LangGraph host adapter** for an A/B. The
+> claim API is REST-normalized: `payer_get_claim` returns a light attachment **manifest**,
+> and the heavy clinical body — narrative/findings plus a bulky `image_b64` blob — is
+> fetched on demand with `payer_get_attachment`, which is the real payload that adapter
+> encodes. See [Halo A/B](#halo-ab-halo1).
 
 ## How it's wired
 
 ```typescript
 import { createAgent } from "langchain";
 import { ChatAnthropic } from "@langchain/anthropic";
-import { TOOLS } from "./tools.js";            // 13 payer tools as tool() + zod
+import { installHalo } from "@halo-format/langgraph";
+import { TOOLS } from "./tools.js";            // 15 payer tools as tool() + zod
 
 const model = new ChatAnthropic({ model: "claude-sonnet-4-6", maxTokens: 8000 });
-const agent = createAgent({ model, tools: TOOLS, systemPrompt: SYSTEM_PROMPT }); // SYSTEM_PROMPT = CLAUDE.md
-const result = await agent.invoke(
-  { messages: [{ role: "user", content: prompt }] },
-  { recursionLimit: 120 },
-);
+
+// baseline:
+const agent = createAgent({ model, tools: TOOLS, systemPrompt: SYSTEM_PROMPT });
+
+// HALO=1: append halo_fetch + the encode middleware
+const halo = installHalo({ tools: TOOLS });
+const haloAgent = createAgent({ model, tools: halo.tools, middleware: halo.middleware, systemPrompt: SYSTEM_PROMPT + HALO_GUIDANCE });
 ```
 
-The 13 tools (`src/tools.ts`) are `tool()` functions with zod schemas wrapping the
+The 15 tools (`src/tools.ts`) are `tool()` functions with zod schemas wrapping the
 SQL on `ext.*`/`agent.*`. `payer_adjudicate_line` runs the deterministic engine
 (`src/engine.ts`); `payer_request_review` blocks on the `agent.approvals` gate;
 `payer_post_adjudication` writes the 835/EOB.
@@ -50,13 +55,55 @@ npx tsx src/agent.ts CLM-PROF
 Each run writes `runs/<label>.json` (token usage from the message stream, estimated
 cost, per-tool counts).
 
-## Where Halo plugs in (for you)
+## Halo A/B (`HALO=1`)
 
-The Halo LangGraph adapter wraps this agent at the **tool-result boundary** — encode
-a large `ToolMessage` into a content-addressed store, hand the model a shape map, and
-expose a `halo_fetch` tool — without touching the engine, the gate, or the decision
-logic here. The `agent.halo_nodes` / `agent.halo_maps` tables are already in the
-schema for it to use.
+The Halo LangGraph adapter wraps this agent at the **tool-result boundary** — a
+`wrapToolCall` middleware encodes a large `ToolMessage` into a content-addressed store,
+hands the model a shape map, and exposes a `halo_fetch` tool — without touching the
+engine, the gate, or the decision logic here.
+
+```bash
+HALO=1 npx tsx src/agent.ts CLM-PROF          # Halo on  -> runs/halo.json
+npx tsx src/agent.ts CLM-PROF                 # baseline -> runs/baseline.json
+```
+
+`HALO=1` calls `installHalo({ tools: TOOLS })`, appends `halo_fetch` and the encode
+middleware to `createAgent`, and rides navigation guidance in the system prompt. The
+payload it earns its keep on is the **on-demand attachment body** from
+`payer_get_attachment`. Tune the encode floor with `HALO_THRESHOLD` (default 2048 bytes).
+Add **`CACHE=1`** to turn on Anthropic prompt caching (off by default in `ChatAnthropic`;
+applies to both arms — see `src/caching.ts`).
+
+### Measured: where Halo wins, and the caching effect
+
+`npm run ab` (or `npx tsx scripts/ab-big-payload.ts`) is a self-contained A/B (only an API
+key, no DB) on one ~270KB attachment, asking a question answerable from the small clinical
+fields. Numbers below are from the Python port (`claude-sonnet-4-6`); the TS path is at
+parity (same adapter, same shapes).
+
+**1. Big payload, short read path:**
+
+| arm | context ingested | cost |
+|---|---|---|
+| baseline | 238,457 tok | $0.72 |
+| **halo** | **2,726 tok** | **$0.015** |
+
+**~98% less**, identical answer — the model reads `kind`/`findings` from the shape map; the
+200KB `image_b64` blob never enters context.
+
+**2. Full adjudication loop** (`CLM-BIG`, modest 2×~40KB bodies, ~20 tool calls):
+
+| | baseline | halo | Δ |
+|---|---|---|---|
+| no caching | $1.53 | $1.79 | halo **+17%** |
+| `CACHE=1` | $0.46 | $0.47 | halo **+2%** |
+
+> **The honest picture.** Halo's reliable, deterministic win is the **per-payload context
+> reduction** (table 1), which dominates when the payload is large relative to the
+> conversation. Across a *long* loop with *modest* payloads (table 2) it's a wash: without
+> caching the extra `halo_fetch` round trips cost more than the small blobs they remove;
+> **prompt caching cuts both arms ~70% and closes the gap to ~break-even**. Measure your own
+> workload; lean on previews and a higher `HALO_THRESHOLD` to keep round trips down.
 
 ## Layout
 
