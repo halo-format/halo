@@ -1,10 +1,10 @@
 // Keep the Python packages on the same version as the npm packages.
 //
-// Halo ships four packages on one shared (locked) version: the two npm packages
+// Halo ships its packages on one shared (locked) version: the npm packages
 // (@halo-format/halo, @halo-format/claude — locked together via Changesets `fixed`)
-// and the two PyPI packages (halo-format, halo-format-claude). Changesets only knows
-// about the npm side, so this script copies the canonical npm version into the Python
-// pyproject.toml files.
+// and the PyPI packages (halo-format, halo-format-claude, halo-format-langgraph).
+// Changesets only knows about the npm side, so this script copies the canonical npm
+// version into the Python pyproject.toml files.
 //
 // It runs in two places:
 //   1. `pnpm version` (the Changesets version step) — so the Version PR carries the
@@ -31,6 +31,7 @@ if (!version) {
 const pyprojects = [
   "py/packages/halo/pyproject.toml",
   "py/packages/claude/pyproject.toml",
+  "py/packages/langgraph/pyproject.toml",
 ];
 
 let changed = 0;

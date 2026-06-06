@@ -8,3 +8,8 @@ members = ["packages/*", "conformance"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.pytest.ini_options]
+# importlib mode lets packages share test-file basenames (e.g. each adapter has its own
+# tests/test_install.py) without the prepend-mode "import file mismatch" collision.
+addopts = "--import-mode=importlib"
