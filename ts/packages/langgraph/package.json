@@ -1,6 +1,6 @@
 {
   "name": "@halo-format/langgraph",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Halo host adapter for LangChain agents and LangGraph graphs: a wrapToolCall encode middleware (results become a shape map, out of context) plus a single halo_fetch navigation tool. installHalo() wires it in one call.",
   "type": "module",
   "exports": {

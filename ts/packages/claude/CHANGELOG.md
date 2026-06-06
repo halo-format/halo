@@ -1,5 +1,11 @@
 # @halo-format/claude
 
+## 0.3.1
+
+### Patch Changes
+
+- @halo-format/halo@0.3.1
+
 ## 0.3.0
 
 ### Patch Changes

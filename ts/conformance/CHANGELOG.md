@@ -1,5 +1,11 @@
 # @halo-format/conformance
 
+## 0.0.5
+
+### Patch Changes
+
+- @halo-format/halo@0.3.1
+
 ## 0.0.4
 
 ### Patch Changes
