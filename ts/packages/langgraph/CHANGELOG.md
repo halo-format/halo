@@ -1,5 +1,11 @@
 # @halo-format/langgraph
 
+## 0.4.0
+
+### Patch Changes
+
+- @halo-format/halo@0.4.0
+
 ## 0.3.1
 
 ### Patch Changes

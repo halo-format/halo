@@ -1,6 +1,6 @@
 {
   "name": "@halo-format/conformance",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "description": "TypeScript harness that loads ../../conformance/vectors and asserts the core conforms.",
   "type": "module",
