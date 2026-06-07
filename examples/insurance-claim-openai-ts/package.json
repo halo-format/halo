@@ -1,0 +1,27 @@
+{
+  "name": "insurance-claim-openai-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenAI Agents SDK port of the insurance-claim-decision-agent (TypeScript): a native Agent/Runner over the same deterministic engine, with gpt-4.1. HALO=1 attaches the Halo OpenAI-Agents adapter (a Model wrapper) for an A/B.",
+  "scripts": {
+    "initdb": "bash scripts/init_db.sh",
+    "seed": "tsx db/seed.ts",
+    "agent": "tsx src/agent.ts",
+    "ab": "tsx scripts/ab-big-payload.ts",
+    "reviewer": "tsx src/reviewer-console.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.1.0",
+    "@halo-format/halo": "^0.4.0",
+    "@halo-format/openai": "^0.4.0",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
