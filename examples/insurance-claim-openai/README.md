@@ -86,6 +86,19 @@ small fields — only an API key, no DB):
 python -m scripts.ab_big_payload          # baseline vs halo on one big payload
 ```
 
+**Observed** — one run, `gpt-5.5`, a ~270KB attachment. A live agent is non-deterministic, so treat
+a single run as illustrative; the deterministic per-payload reduction is the stable signal.
+
+| arm | context ingested (fresh input) | cost\* | tool calls |
+|---|---|---|---|
+| baseline | 186,168 tok | $0.373 | 1 |
+| **halo** | **1,043 tok** | **$0.003** | 1 |
+
+≈ **99% less context and cost**, with the **identical** answer (`periapical_xray`; findings support
+the crown on #19) — the ~200KB `image_b64` never enters context. <br>\*Cost is computed at the
+harness's fixed gpt-4.1 rate, so the absolute figure is approximate for another model; both arms use
+the same rate, so the relative reduction holds.
+
 Across a *long* adjudication loop with *modest* payloads it is closer to a wash: Halo's extra
 `halo_fetch` round trips can offset the small blobs they remove, and OpenAI's automatic prefix
 caching makes a carried blob cheap to re-read. Halo dominates when the payload is large
