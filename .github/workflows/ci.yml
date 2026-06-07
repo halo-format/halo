@@ -55,8 +55,9 @@ jobs:
       - name: Install packages + test deps
         # The claude adapter's Agent SDK dependency is an optional extra ([agent-sdk]); install it so
         # the install_halo tests run (the raw Messages API path needs no extra). The langgraph adapter's
-        # [langgraph] extra pulls langgraph itself so the halo_tool_node StateGraph tests run.
-        run: pip install -e py/packages/halo -e "py/packages/claude[agent-sdk]" -e "py/packages/langgraph[langgraph]" pytest
+        # [langgraph] extra pulls langgraph itself so the halo_tool_node StateGraph tests run. The openai
+        # adapter depends on openai-agents directly (not an extra), so a plain editable install pulls it.
+        run: pip install -e py/packages/halo -e "py/packages/claude[agent-sdk]" -e "py/packages/langgraph[langgraph]" -e py/packages/openai pytest
 
       - name: Run tests + conformance vectors
         run: pytest py

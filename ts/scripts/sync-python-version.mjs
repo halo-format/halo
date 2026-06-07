@@ -1,8 +1,9 @@
 // Keep the Python packages on the same version as the npm packages.
 //
 // Halo ships its packages on one shared (locked) version: the npm packages
-// (@halo-format/halo, @halo-format/claude — locked together via Changesets `fixed`)
-// and the PyPI packages (halo-format, halo-format-claude, halo-format-langgraph).
+// (@halo-format/halo, @halo-format/claude, … — locked together via Changesets `fixed`)
+// and the PyPI packages (halo-format, halo-format-claude, halo-format-langgraph,
+// halo-format-openai).
 // Changesets only knows about the npm side, so this script copies the canonical npm
 // version into the Python pyproject.toml files.
 //
@@ -32,6 +33,7 @@ const pyprojects = [
   "py/packages/halo/pyproject.toml",
   "py/packages/claude/pyproject.toml",
   "py/packages/langgraph/pyproject.toml",
+  "py/packages/openai/pyproject.toml",
 ];
 
 let changed = 0;
