@@ -1,6 +1,6 @@
 [project]
 name = "halo-format-claude"
-version = "0.3.1"
+version = "0.4.0"
 description = "Halo adapter for Claude on two runtimes (Python): the Agent SDK (install_halo — a PostToolUse encode hook + a single in-process halo_fetch MCP tool) and the raw Messages API (halo_format_claude.raw — create_raw_halo, no Agent SDK needed). Tool results become a shape map kept out of context."
 readme = "README.md"
 requires-python = ">=3.10"

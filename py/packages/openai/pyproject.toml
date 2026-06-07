@@ -1,6 +1,6 @@
 [project]
 name = "halo-format-openai"
-version = "0.3.0"
+version = "0.4.0"
 description = "Halo host adapter for the OpenAI Agents SDK (Python): a call_model_input_filter that swaps large tool results for a shape map (out of context) plus a halo_fetch navigation tool. install_halo() wires it in one call."
 readme = "README.md"
 requires-python = ">=3.10"
