@@ -73,12 +73,18 @@ Three layers, each depending only on the ones below — you adopt only as far up
 
 L0 and L1 are the core package. L2 ships separately and depends on the core, never the reverse.
 
-## Use it with the Claude Agent SDK
+## Use it with your agent SDK
 
-The first host adapter targets the Claude Agent SDK (TypeScript and Python). One call wires it in: a
-`PostToolUse` hook encodes every large tool result and replaces it with a compact **shape map** (root
-kind + per-field kind and bounded preview), and a single `halo_fetch` tool lets the model pull back
-only the fields it needs, verified on read.
+Halo ships host adapters for three agent SDKs (TypeScript and Python each). Same core, one call to
+wire in: the adapter encodes every large tool result and replaces it with a compact **shape map**
+(root kind + per-field kind and bounded preview), and a single `halo_fetch` tool lets the model pull
+back only the fields it needs, verified on read. They differ only in *where* they intercept:
+
+| Host SDK | Packages (npm · PyPI) | Interception seam |
+|---|---|---|
+| Claude Agent SDK | `@halo-format/claude` · `halo-format-claude` | `PostToolUse` hook |
+| LangChain / LangGraph | `@halo-format/langgraph` · `halo-format-langgraph` | `wrap_tool_call` middleware |
+| OpenAI Agents SDK | `@halo-format/openai` · `halo-format-openai` | `call_model_input_filter` (Py) / model wrapper (TS) |
 
 ```ts
 import { query } from "@anthropic-ai/claude-agent-sdk";
@@ -88,13 +94,13 @@ const { options } = installHalo(baseOptions, { threshold: 2048 });
 for await (const msg of query({ prompt, options })) { /* … */ }
 ```
 
-See the adapter READMEs ([TS](ts/packages/claude), [Python](py/packages/claude)) and the two runnable
-examples below.
+See each adapter's README ([Claude](ts/packages/claude), [LangGraph](ts/packages/langgraph),
+[OpenAI](ts/packages/openai)) and the runnable examples below.
 
 ## Examples
 
-Two self-contained agents, each with an A/B harness comparing baseline (raw JSON) vs Halo vs the TOON
-compact format:
+Self-contained agents, each with an A/B harness comparing baseline (raw JSON) vs Halo (and, where
+noted, the TOON compact format):
 
 - **[examples/creditline-decision-agent](examples/creditline-decision-agent)** (Python) — a
   human-in-the-loop credit-line decision agent over a simulated bureau/Postgres world. The decision
@@ -102,6 +108,15 @@ compact format:
 - **[examples/monitoring-agent](examples/monitoring-agent)** (TypeScript) — an on-call agent that
   triages Sentry-shaped issues, diagnoses against Datadog/Loki-shaped logs, and declares
   PagerDuty-shaped incidents through a human-gated tool layer.
+- **insurance-claim adjudication agent** — the same deterministic claim-adjudication agent ported
+  across host SDKs: [Claude](examples/insurance-claim-decision-agent),
+  [LangGraph](examples/insurance-claim-langgraph), and the OpenAI Agents SDK
+  ([Python](examples/insurance-claim-openai) · [TypeScript](examples/insurance-claim-openai-ts)).
+  Each ships a self-contained big-payload A/B (`ab_big_payload`): the model answers from a few small
+  clinical fields while a ~200KB `image_b64` blob never enters context. On the OpenAI Agents SDK port
+  that one payload measured **≈99% (Python) / ≈98% (TypeScript) less context and cost**, with the
+  identical decision — a single illustrative run; the deterministic per-payload reduction is the
+  stable signal (see each port's README for methodology and caveats).
 
 ## Repository layout
 
@@ -119,8 +134,12 @@ examples/      runnable example agents with token A/B harnesses
 |---|---|---|
 | `@halo-format/halo` | npm | Core: encode / navigate / verify; `MemoryStore` + `FileStore` |
 | `@halo-format/claude` | npm | Host adapter for the Claude Agent SDK |
+| `@halo-format/langgraph` | npm | Host adapter for LangChain / LangGraph |
+| `@halo-format/openai` | npm | Host adapter for the OpenAI Agents SDK |
 | `halo-format` | PyPI | Core (Python port) |
 | `halo-format-claude` | PyPI | Host adapter for the Claude Agent SDK (Python port) |
+| `halo-format-langgraph` | PyPI | Host adapter for LangChain / LangGraph (Python port) |
+| `halo-format-openai` | PyPI | Host adapter for the OpenAI Agents SDK (Python port) |
 
 Both ports produce **identical handles for identical input** — enforced by the shared conformance
 vectors in [`conformance/`](conformance).
@@ -156,13 +175,15 @@ chunking boundaries.
 ## Status
 
 Pre-1.0. The framework-agnostic core (encode / navigate / verify, both ports, against the shared
-conformance suite) and the Claude Agent SDK adapter are built and tested. The format version is `1`,
-declared in every envelope.
+conformance suite) and three host adapters — Claude Agent SDK, LangChain / LangGraph, and the OpenAI
+Agents SDK — are built, tested, and published (npm + PyPI). The format version is `1`, declared in
+every envelope.
 
 ### Roadmap
 
 - **Heavy store adapters** — Redis / Valkey and S3, for persistence across sessions.
-- **More host adapters** — LangGraph (Python first), OpenAI Agents, MCP producer middleware.
+- **More host adapters** — MCP producer middleware.
+- **L2 audit chain** — signed, Merkle-linked log over the handles a run touched.
 - **L2 audit chain** (`@halo-format/chain`) — signed, Merkle-linked record of touched handles.
 
 These are planned; no package or stub exists until each is actually built.

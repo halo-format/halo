@@ -1,0 +1,23 @@
+[project]
+name = "insurance-claim-openai"
+version = "0.1.0"
+description = "OpenAI Agents SDK port of the insurance-claim-decision-agent: a native Agent/Runner over the same deterministic engine, with gpt-4.1. HALO=1 attaches the Halo OpenAI-Agents adapter (a call_model_input_filter) for an A/B."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai-agents>=0.1",
+    "asyncpg>=0.29",
+    "python-dotenv>=1.0",
+    "halo-format>=0.4.0",
+    "halo-format-openai>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent", "db"]
